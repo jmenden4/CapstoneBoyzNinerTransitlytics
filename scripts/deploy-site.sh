@@ -1,0 +1,1 @@
+scp -i ../admin.pem -r site/transit-ninerlytics/build/* ec2-user@ec2-3-144-148-29.us-east-2.compute.amazonaws.com:/home/ec2-user/app/site
