@@ -17,6 +17,25 @@ import BusesPage from './app/busesPage'
 
 
 
+const FilterMenu = () => {
+    return (
+        <>
+            FILTER MENU
+        </>
+    )
+}
+
+
+const TimeMenu = () => {
+    return (
+        <>
+            TIME MENU
+        </>
+    )
+}
+
+
+
 
 const NavigationBar = () => {
     return (
@@ -50,7 +69,7 @@ const NavigationBar = () => {
                             FILTER
                         </Dropdown.Toggle>
                         <Dropdown.Menu>
-                            hello
+                            <FilterMenu/>
                         </Dropdown.Menu>
                     </Dropdown>
                     <Dropdown>
@@ -58,7 +77,7 @@ const NavigationBar = () => {
                             TIME RANGE
                         </Dropdown.Toggle>
                         <Dropdown.Menu>
-                            hello
+                            <TimeMenu/>
                         </Dropdown.Menu>
                     </Dropdown>
                 </Stack>
