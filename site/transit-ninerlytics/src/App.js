@@ -10,6 +10,8 @@ import Button from 'react-bootstrap/Button'
 
 import LOGO from './resources/logo.png'
 import UNCC_LOGO from './resources/UNC_Charlotte_Primary_Horiz_Logo.png'
+import MultiSlider from "@ptomasroos/react-native-multi-slider"
+
 
 import {BrowserRouter, Routes, Route, Navigate, Outlet} from 'react-router-dom'
 import {LinkContainer} from 'react-router-bootstrap'
@@ -99,16 +101,124 @@ const FilterSelector = () => {
 }
 
 const TimeSelector = () => {
+<<<<<<< HEAD
+=======
+
+
+    const sliderConverter = (value) => {
+        return value === 0
+          ? "12am"
+          : (value < 13 ? value : value - 12) + (value < 12 ? "am" : "pm");
+      }
+
+    const range = {min: 0, max: 24}
+    const Slider = 12
+
+    const startTimeSlider = ({}) => {
+
+        const {startMin, startMax} = range;
+        const [startTime, setStartTime] = useState(null)
+        const [barWidth, setBarWidth] = useState(150)
+
+        if (!startTime) {
+            setStartTime([startMin]); 
+        }
+
+        const bar = (event) => {
+            setBarWidth(event.nativeEvent.Layout.width - Slider * 2)
+        }
+
+    const selectedStartTimes = (values) => {
+            setStartTime(values)
+    }
+    }
+
+
+
+    const endTimeSlider = ({}) => {
+
+        const {endMin, endMax} = range;
+        const [endTime, setEndTime] = useState(null)
+        const [barWidth, setBarWidth] = useState(150)
+
+        if (!endTime) {
+            setEndTime([endMax]); 
+        }
+        const bar = (event) => {
+            setBarWidth(event.nativeEvent.Layout.width - Slider * 2)
+        }
+    
+        const selectedEndTimes = (values) => {
+                setEndTime(values)
+        }
+    }
+>>>>>>> 40f882c (Actual time Slider)
     return (
         <Dropdown>
             <Dropdown.Toggle>
                 TIME RANGE
             </Dropdown.Toggle>
             <Dropdown.Menu>
+<<<<<<< HEAD
                 {/* <TimeMenu/> */}
             </Dropdown.Menu>
         </Dropdown>
     )
+=======
+            <View bar={bar} style={styles.wrapper}>
+                    <Form className="px-2">
+                    <Stack direction="horizontal" className="mb-2">
+                        <label className="flex-grow-1">Start Time</label>
+                        <MultiSlider
+                                min={startMin}
+                                max={startMax}
+                                allowOverlap
+                                values={startTime}
+                                sliderLength={barWidth}
+                                selectedStartTimes={selectedStartTimes}
+                                enableLabel={true}
+                                trackStyle={{
+                                height: 6,
+                                borderRadius: 5,
+                                }}
+                                markerOffsetY={1}
+                                selectedStyle={{
+                                backgroundColor: $primary,
+                                }}
+                                unselectedStyle={{
+                                backgroundColor: "#FFFFFF",
+                                }}/>
+                                <startTimeSlider/>
+                    </Stack>
+                    <Stack direction="horizontal" className="my-2">
+                        <label className="flex-grow-1">End Time</label>
+                        <MultiSlider
+                                min={endMin}
+                                max={endMax}
+                                allowOverlap
+                                values={endTime}
+                                sliderLength={barWidth}
+                                selectedEndTimes={selectedEndTimes}
+                                enableLabel={true}
+                                trackStyle={{
+                                height: 6,
+                                borderRadius: 5,
+                                }}
+                                markerOffsetY={1}
+                                selectedStyle={{
+                                backgroundColor: $primary,
+                                }}
+                                unselectedStyle={{
+                                backgroundColor: "#FFFFFF",
+                                }}/>
+                                <endTimeSlider />
+                    </Stack>
+                    </Form>
+                    </View>
+       </Dropdown.Menu>
+       </Dropdown>
+    );
+>>>>>>> 40f882c (Actual time Slider)
 }
 
 
