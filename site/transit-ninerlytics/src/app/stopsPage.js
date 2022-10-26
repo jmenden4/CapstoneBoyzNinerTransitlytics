@@ -12,20 +12,57 @@ const StopsPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const navigate = useNavigate()
 
-    const dataType = searchParams.get("data")
     
+    // datatypes to display in sidebar dropdown
+    const sidebar = [
+        {
+            name: "# People On",
+            key: "num_people_on",
+        },
+        {
+            name: "# People Off",
+            key: "num_people_off",
+        },
+        {
+            name: "# Times Stopped",
+            key: "times_stopped",
+        },
+        {
+            name: "Avg Wait Time",
+            key: "avg_wait",
+        },
+        {
+            name: "Min / Max Wait Time",
+            key: "min_max_wait",
+        },
+    ]
+
+
+    // get current data type/item
+    const dataType = searchParams.get("data")
+    const currentItem = sidebar.find(x => x.key === dataType)
+
+
+    // navigate to a default datatype when url isn't valid
     useEffect(() => {
-        if(dataType === null) {
+        if(currentItem == null) {
             navigate({
                 pathname: "/stops",
                 search: `?${createSearchParams({
-                    data: "DEFAULT_DATA",
+                    data: "avg_wait",
                 })}`,
                 replace: true,
             })
         }
     }, [])
 
+
+    // don't show anything until we're definitely at an actual data type (after re-navigated if required)
+    if(currentItem == null) {
+        return null
+    }
+
+    
     const setDataType = key => {
         setSearchParams(x => {
             const params = Object.fromEntries(x)
@@ -33,24 +70,6 @@ const StopsPage = () => {
             return params
         })
     }
-
-    let sidebar = [
-        {
-            "name": "# People On", "key": "num_people_on"
-        },
-        {
-            "name": "# People Off", "key": "num_people_off"
-        },
-        {
-            "name": "# Times Stopped", "key": "times_stopped"
-        },
-        {
-            "name": "Avg Wait Time", "key": "avg_wait"
-        },
-        {
-            "name": "Min / Max Wait Time", "key": "min_max_wait"
-        }
-    ]
 
     
     // http://alexurquhart.github.io/free-tiles/
@@ -80,11 +99,11 @@ const StopsPage = () => {
             }} className="p-2 border-start">
                 <Dropdown onSelect={key => setDataType(key)} >
                     <Dropdown.Toggle className="w-100">
-                        {sidebar.find(x=>x.key === dataType).name}
+                        {currentItem.name}
                     </Dropdown.Toggle>
                     <Dropdown.Menu className="w-100">
                     {sidebar.map(x => (
-                        <Dropdown.Item eventKey={x.key} active={x.key === dataType? true:false} >{x.name} </Dropdown.Item>
+                        <Dropdown.Item key={x.key} eventKey={x.key} active={x.key === dataType}>{x.name}</Dropdown.Item>
                     ))}
                     </Dropdown.Menu>
                 </Dropdown>
