@@ -64,11 +64,11 @@ const StopsPage = () => {
                         {dataType}
                     </Dropdown.Toggle>
                     <Dropdown.Menu className="w-100">
-                        <Dropdown.Item eventKey="1">Action</Dropdown.Item>
-                        <Dropdown.Item eventKey="2">Another action</Dropdown.Item>
-                        <Dropdown.Item eventKey="3" active>Active Item</Dropdown.Item>
-                        <Dropdown.Divider />
-                        <Dropdown.Item eventKey="4">Separated link</Dropdown.Item>
+                        <Dropdown.Item style={{ backgroundColor: '#08874C', color: 'white' }} eventKey="Avg Wait Time">Avg Wait Time</Dropdown.Item>
+                        <Dropdown.Item style={{ backgroundColor: '#08874C', color: 'white' }} eventKey="Min / Max Wait Time">Min / Max Wait Time</Dropdown.Item>
+                        <Dropdown.Item style={{ backgroundColor: '#08874C', color: 'white' }} eventKey="# People On" active># People On</Dropdown.Item>
+                        <Dropdown.Item style={{ backgroundColor: '#08874C', color: 'white' }} eventKey="# People Off" active># People Off</Dropdown.Item>
+                        <Dropdown.Item style={{ backgroundColor: '#08874C', color: 'white' }} eventKey="# Times Stopped" active># Times Stopped</Dropdown.Item>
                     </Dropdown.Menu>
                 </Dropdown>
             </div>
