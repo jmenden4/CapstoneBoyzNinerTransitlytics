@@ -14,17 +14,47 @@ import {LinkContainer} from 'react-router-bootstrap'
 
 import StopsPage from './app/stopsPage'
 import BusesPage from './app/busesPage'
+import { Renderer } from 'leaflet'
+import DropdownToggle from 'react-bootstrap/lib/DropdownToggle'
 
 
 
 const FilterMenu = () => {
-    return (
-        <>
-            FILTER MENU
-        </>
-    )
-}
 
+    return (
+        <Dropdown>
+           <Dropdown.Toggle variant = "success" id= "Drop Down">
+                FILTER MENU
+            </Dropdown.Toggle>
+
+            <Dropdown.Menu>
+            <Dropdown.Item href="#/action-1">Routes</Dropdown.Item>
+            <Dropdown.Toggle variant = "success" id= "Drop Down">
+                <Dropdown.Item href="#/action-1">Gold</Dropdown.Item>
+                <Dropdown.Item href="#/action-1">Silver</Dropdown.Item>
+                <Dropdown.Item href="#/action-1">Green</Dropdown.Item>
+                </Dropdown.Toggle>
+            <Dropdown.Item href="#/action-1">Busses</Dropdown.Item>
+            <Dropdown.Toggle variant = "success" id= "Drop Down">
+                <Dropdown.Item href="#/action-1">2401</Dropdown.Item>
+                <Dropdown.Item href="#/action-1">2402</Dropdown.Item>
+                <Dropdown.Item href="#/action-1">2403</Dropdown.Item>
+                <Dropdown.Item href="#/action-1">2404</Dropdown.Item>
+                <Dropdown.Item href="#/action-1">2405</Dropdown.Item>
+                <Dropdown.Item href="#/action-1">2406</Dropdown.Item>
+                <Dropdown.Item href="#/action-1">2407</Dropdown.Item>
+                <Dropdown.Item href="#/action-1">2408</Dropdown.Item>
+                <Dropdown.Item href="#/action-1">2409</Dropdown.Item>
+                <Dropdown.Item href="#/action-1">2410</Dropdown.Item>
+                <Dropdown.Item href="#/action-1">2411</Dropdown.Item>
+                <Dropdown.Item href="#/action-1">2412</Dropdown.Item>
+                </Dropdown.Toggle>
+
+                
+            </Dropdown.Menu>
+        </Dropdown>
+    );
+}
 
 const TimeMenu = () => {
     return (
