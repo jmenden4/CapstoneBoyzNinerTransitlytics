@@ -34,7 +34,6 @@ const StopsPage = () => {
         })
     }
     
-
     // http://alexurquhart.github.io/free-tiles/
     // https://leaflet-extras.github.io/leaflet-providers/preview/
     return (

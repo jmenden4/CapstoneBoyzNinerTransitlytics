@@ -5,6 +5,8 @@ import Col from 'react-bootstrap/Col'
 import Nav from 'react-bootstrap/Nav'
 import Dropdown from 'react-bootstrap/Dropdown'
 import Stack from 'react-bootstrap/Stack'
+import Form from 'react-bootstrap/Form'
+import Button from 'react-bootstrap/Button'
 
 import LOGO from './resources/logo.png'
 import UNCC_LOGO from './resources/UNC_Charlotte_Primary_Horiz_Logo.png'
@@ -12,55 +14,100 @@ import UNCC_LOGO from './resources/UNC_Charlotte_Primary_Horiz_Logo.png'
 import {BrowserRouter, Routes, Route, Navigate, Outlet} from 'react-router-dom'
 import {LinkContainer} from 'react-router-bootstrap'
 
+import { createContext, useContext, useState } from 'react'
+
 import StopsPage from './app/stopsPage'
 import BusesPage from './app/busesPage'
-import { Renderer } from 'leaflet'
-import DropdownToggle from 'react-bootstrap/lib/DropdownToggle'
 
 
 
-const FilterMenu = () => {
+const AppContext = createContext()
+
+
+
+
+const FilterSelector = () => {
+    const {filter, setFilter} = useContext(AppContext)
+    const routes = ["Gold", "Silver", "Green"]
+    const buses = [2401, 2402, 2403, 2404, 2405, 2406, 2407, 2408, 2409, 2410, 2411, 2412]
+
+    const toggleRouteFilter = (key) => {
+        const newRoutes = filter.routes
+        const i = newRoutes.indexOf(key)
+        if(i === -1) {
+            newRoutes.push(key)
+        } else {
+            newRoutes.splice(i, 1)
+        }
+        setFilter({
+            ...filter,
+            routes: newRoutes,
+        })
+    }
+
+    const toggleBusFilter = (key) => {
+        const newBuses = filter.buses
+        const i = newBuses.indexOf(key)
+        if(i === -1) {
+            newBuses.push(key)
+        } else {
+            newBuses.splice(i, 1)
+        }
+        setFilter({
+            ...filter,
+            buses: newBuses,
+        })
+    }
+
+    const setAllRoutesFilter = value => setFilter({
+        ...filter,
+        routes: value ? routes : [],
+    })
+
+    const setAllBusesFilter = value => setFilter({
+        ...filter,
+        buses: value ? buses : [],
+    })
 
     return (
         <Dropdown>
-           <Dropdown.Toggle variant = "success" id= "Drop Down">
-                FILTER MENU
+            <Dropdown.Toggle>
+                Filter
             </Dropdown.Toggle>
-
             <Dropdown.Menu>
-            <Dropdown.Item href="#/action-1">Routes</Dropdown.Item>
-            <Dropdown.Toggle variant = "success" id= "Drop Down">
-                <Dropdown.Item href="#/action-1">Gold</Dropdown.Item>
-                <Dropdown.Item href="#/action-1">Silver</Dropdown.Item>
-                <Dropdown.Item href="#/action-1">Green</Dropdown.Item>
-                </Dropdown.Toggle>
-            <Dropdown.Item href="#/action-1">Busses</Dropdown.Item>
-            <Dropdown.Toggle variant = "success" id= "Drop Down">
-                <Dropdown.Item href="#/action-1">2401</Dropdown.Item>
-                <Dropdown.Item href="#/action-1">2402</Dropdown.Item>
-                <Dropdown.Item href="#/action-1">2403</Dropdown.Item>
-                <Dropdown.Item href="#/action-1">2404</Dropdown.Item>
-                <Dropdown.Item href="#/action-1">2405</Dropdown.Item>
-                <Dropdown.Item href="#/action-1">2406</Dropdown.Item>
-                <Dropdown.Item href="#/action-1">2407</Dropdown.Item>
-                <Dropdown.Item href="#/action-1">2408</Dropdown.Item>
-                <Dropdown.Item href="#/action-1">2409</Dropdown.Item>
-                <Dropdown.Item href="#/action-1">2410</Dropdown.Item>
-                <Dropdown.Item href="#/action-1">2411</Dropdown.Item>
-                <Dropdown.Item href="#/action-1">2412</Dropdown.Item>
-                </Dropdown.Toggle>
-
-                
+                <Form className="px-2">
+                    <Stack direction="horizontal" className="mb-2">
+                        <label className="flex-grow-1">Routes</label>
+                        <Button variant="link" size="sm" onClick={e => setAllRoutesFilter(true)}>All</Button>
+                        <Button variant="link" size="sm" onClick={e => setAllRoutesFilter(false)}>None</Button>
+                    </Stack>
+                    {routes.map(x => (
+                        <Form.Check key={x} label={x} checked={filter.routes.includes(x)} onChange={e => toggleRouteFilter(x)}/>
+                    ))}
+                    <Stack direction="horizontal" className="my-2">
+                        <label className="flex-grow-1">Buses</label>
+                        <Button variant="link" size="sm" onClick={e => setAllBusesFilter(true)}>All</Button>
+                        <Button variant="link" size="sm" onClick={e => setAllBusesFilter(false)}>None</Button>
+                    </Stack>
+                    {buses.map(x => (
+                        <Form.Check key={x} label={x} checked={filter.buses.includes(x)} onChange={e => toggleBusFilter(x)}/>
+                    ))}
+                </Form>
             </Dropdown.Menu>
         </Dropdown>
     );
 }
 
-const TimeMenu = () => {
+const TimeSelector = () => {
     return (
-        <>
-            TIME MENU
-        </>
+        <Dropdown>
+            <Dropdown.Toggle>
+                TIME RANGE
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+                {/* <TimeMenu/> */}
+            </Dropdown.Menu>
+        </Dropdown>
     )
 }
 
@@ -94,22 +141,8 @@ const NavigationBar = () => {
             </Col>
             <Col>
                 <Stack direction="horizontal" gap={2} className="justify-content-center">
-                    <Dropdown>
-                        <Dropdown.Toggle>
-                            FILTER
-                        </Dropdown.Toggle>
-                        <Dropdown.Menu>
-                            <FilterMenu/>
-                        </Dropdown.Menu>
-                    </Dropdown>
-                    <Dropdown>
-                        <Dropdown.Toggle>
-                            TIME RANGE
-                        </Dropdown.Toggle>
-                        <Dropdown.Menu>
-                            <TimeMenu/>
-                        </Dropdown.Menu>
-                    </Dropdown>
+                    <FilterSelector/>
+                    <TimeSelector/>
                 </Stack>
             </Col>
             <Col className="align-self-center d-flex justify-content-end">
@@ -135,15 +168,22 @@ const Layout = () => {
 
 
 const App = () => {
+    const [filter, setFilter] = useState({
+        routes: ["Gold", "Silver"],
+        buses: [2405, 2406, 2408],
+    })
+
     return (
         <BrowserRouter>
-            <Routes>
-                <Route path="/" element={<Layout/>}>
-                    <Route index element={<Navigate to="stops" replace />} />
-                    <Route path="stops" element={<StopsPage/>}/>
-                    <Route path="buses" element={<BusesPage/>}/>
-                </Route>
-            </Routes>
+            <AppContext.Provider value={{filter, setFilter}}>
+                <Routes>
+                    <Route path="/" element={<Layout/>}>
+                        <Route index element={<Navigate to="stops" replace />} />
+                        <Route path="stops" element={<StopsPage/>}/>
+                        <Route path="buses" element={<BusesPage/>}/>
+                    </Route>
+                </Routes>
+            </AppContext.Provider>
         </BrowserRouter>
     )
 }
