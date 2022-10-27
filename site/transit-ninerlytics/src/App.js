@@ -18,6 +18,7 @@ import { createContext, useContext, useState } from 'react'
 
 import StopsPage from './app/stopsPage'
 import BusesPage from './app/busesPage'
+import DropdownItem from 'react-bootstrap/esm/DropdownItem'
 
 
 
@@ -105,7 +106,94 @@ const TimeSelector = () => {
                 TIME RANGE
             </Dropdown.Toggle>
             <Dropdown.Menu>
-                {/* <TimeMenu/> */}
+                
+            </Dropdown.Menu>
+        </Dropdown>
+    )
+}
+
+const DateSelector = () => {
+    const years = [2018, 2019, 2020]
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    const days = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+
+
+    const [valueFM, setValueFM]=useState();
+    const handleSelectFM=(e)=>{
+        console.log(e)
+        setValueFM(e)
+    }
+
+    const [valueFY, setValueFY]=useState();
+    const handleSelectFY=(e)=>{
+        console.log(e)
+        setValueFY(e)
+    }
+
+    const [valueTM, setValueTM]=useState();
+    const handleSelectTM=(e)=>{
+        console.log(e)
+        setValueTM(e)
+    }
+
+    const [valueTY, setValueTY]=useState();
+    const handleSelectTY=(e)=>{
+        console.log(e)
+        setValueTY(e)
+    }
+
+    
+
+    return (
+        <Dropdown autoClose = "outside">
+            <Dropdown.Toggle>
+                Date
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+                <Form className='px-4'>
+                    <Stack direction = "horizontal" className = "firstdate">
+                            <input className='day-form' type="number" name="count" id="count" min="1" max="31" placeholder="Day"></input>
+                    <Dropdown onSelect={handleSelectFM}>        
+                            <Dropdown.Toggle className = "date-btn" style={{ backgroundColor: '#ffff', color: '#08874C'}} >
+                            {valueFM}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                            {months.map((month, index) => (
+                                    <Dropdown.Item eventKey={month} key={index}>{month}</Dropdown.Item>))}
+                            </Dropdown.Menu>
+                    </Dropdown>
+                    <Dropdown onSelect={handleSelectFY}>
+                            <Dropdown.Toggle className = "date-btn" style={{ backgroundColor: '#ffff', color: '#08874C'}}>
+                                {valueFY}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                                {years.map((year) => (
+                                    <Dropdown.Item eventKey={year} key={year.toString()}>{year}</Dropdown.Item>))}
+                            </Dropdown.Menu>
+                    </Dropdown>    
+                    </Stack>
+                    <Stack direction = "horizontal" className = "lastdate">
+                    <input className='day-form' type="number" name="count" id="count" min="1" max="31" placeholder="Day"></input>
+                    <Dropdown onSelect={handleSelectTM}>        
+                            <Dropdown.Toggle className = "date-btn" style={{ backgroundColor: '#ffff', color: '#08874C'}} >
+                            {valueTM}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                            {months.map((month, index) => (
+                                    <Dropdown.Item eventKey={month} key={index}>{month}</Dropdown.Item>))}
+                            </Dropdown.Menu>
+                    </Dropdown>
+                    <Dropdown onSelect={handleSelectTY}>
+                            <Dropdown.Toggle className = "date-btn" style={{ backgroundColor: '#ffff', color: '#08874C'}}>
+                                {valueTY}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                                {years.map((year) => (
+                                    <Dropdown.Item eventKey={year} key={year.toString()}>{year}</Dropdown.Item>))}
+                            </Dropdown.Menu>
+                    </Dropdown>
+                    </Stack>
+                </Form>
             </Dropdown.Menu>
         </Dropdown>
     )
@@ -143,6 +231,7 @@ const NavigationBar = () => {
                 <Stack direction="horizontal" gap={2} className="justify-content-center">
                     <FilterSelector/>
                     <TimeSelector/>
+                    <DateSelector/>
                 </Stack>
             </Col>
             <Col className="align-self-center d-flex justify-content-end">
