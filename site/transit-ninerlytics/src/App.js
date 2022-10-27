@@ -10,13 +10,12 @@ import Button from 'react-bootstrap/Button'
 
 import LOGO from './resources/logo.png'
 import UNCC_LOGO from './resources/UNC_Charlotte_Primary_Horiz_Logo.png'
-import MultiSlider from "@ptomasroos/react-native-multi-slider"
 
 
 import {BrowserRouter, Routes, Route, Navigate, Outlet} from 'react-router-dom'
 import {LinkContainer} from 'react-router-bootstrap'
 
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useReducer, useState } from 'react'
 
 import StopsPage from './app/stopsPage'
 import BusesPage from './app/busesPage'
@@ -102,124 +101,75 @@ const FilterSelector = () => {
 
 const TimeSelector = () => {
 
-    const sliderConverter = (value) => {
-        return value === 0
-          ? "12am"
-          : (value < 13 ? value : value - 12) + (value < 12 ? "am" : "pm");
-      }
+    const [range, adjustRange] = useReducer((currentRange, action) => {
+        const [fromValue, toValue] = currentRange
+        const {type, x} = action
+        switch(type) {
+            case 'from': {
+                return [
+                    x,
+                    Math.max(x, toValue),
+                ]
+            }
+            case 'to': {
+                return [
+                    Math.min(x, fromValue),
+                    x,
+                ]
+            }
+        }
+    }, [0, 24])
 
-    const range = {min: 0, max: 24}
-    const Slider = 12
+    // extract ends from range
+    const [fromValue, toValue] = range
 
-    const startTimeSlider = ({}) => {
+    // function to make 12hour AM/PM text from slider value
+    const xToTimeText = x => {
+        const hour24 = Math.floor(x / 2)
+        const part = x % 2
 
-        const {startMin, startMax} = range;
-        const [startTime, setStartTime] = useState(null)
-        const [barWidth, setBarWidth] = useState(150)
-
-        if (!startTime) {
-            setStartTime([startMin]); 
+        let hour12 = hour24 % 12
+        if(hour12 == 0) {
+            hour12 = 12
         }
 
-        const bar = (event) => {
-            setBarWidth(event.nativeEvent.Layout.width - Slider * 2)
-        }
+        const isAM = x < 24 || x == 48
 
-    const selectedStartTimes = (values) => {
-            setStartTime(values)
+        return `${hour12}:${String(part * 30).padStart(2, "0")}${isAM ? "am" : "pm"}`
     }
 
-    return (
-        <View bar={bar} style={styles.wrapper}>
-        <MultiSlider
-                                min={startMin}
-                                max={startMax}
-                                allowOverlap
-                                values={startTime}
-                                sliderLength={barWidth}
-                                selectedStartTimes={selectedStartTimes}
-                                enableLabel={true}
-                                trackStyle={{
-                                height: 6,
-                                borderRadius: 5,
-                                }}
-                                markerOffsetY={1}
-                                selectedStyle={{
-                                backgroundColor: $primary,
-                                }}
-                                unselectedStyle={{
-                                backgroundColor: "#FFFFFF",
-                                }}/>
-        </View>
-    )
-    }
+    const fromText = xToTimeText(fromValue)
+    const toText = xToTimeText(toValue)
 
+    // let dropdownText = null
+    // if(fromValue == 0 && toValue == 48) {
+    //     dropdownText = 'All Day'
+    // } else {
+    //     dropdownText = `${fromText} - ${toText}`
+    // }
 
-
-    const endTimeSlider = ({}) => {
-
-        const {endMin, endMax} = range;
-        const [endTime, setEndTime] = useState(null)
-        const [barWidth, setBarWidth] = useState(150)
-
-        if (!endTime) {
-            setEndTime([endMax]); 
-        }
-        const bar = (event) => {
-            setBarWidth(event.nativeEvent.Layout.width - Slider * 2)
-        }
-    
-        const selectedEndTimes = (values) => {
-                setEndTime(values)
-        }
-
-        return (
-
-            <View bar={bar} style={styles.wrapper}>
-            <MultiSlider
-                                min={endMin}
-                                max={endMax}
-                                allowOverlap
-                                values={endTime}
-                                sliderLength={barWidth}
-                                selectedEndTimes={selectedEndTimes}
-                                enableLabel={true}
-                                customLabel
-                                trackStyle={{
-                                height: 6,
-                                borderRadius: 5,
-                                }}
-                                markerOffsetY={1}
-                                selectedStyle={{
-                                backgroundColor: $primary,
-                                }}
-                                unselectedStyle={{
-                                backgroundColor: "#FFFFFF",
-                                }}/>
-
-            </View>
-        )
-    }
     return (
         <Dropdown>
             <Dropdown.Toggle>
-                TIME RANGE
+                Time
             </Dropdown.Toggle>
-            <Dropdown.Menu>
-                    <Form className="px-2">
-                    <Stack direction="horizontal" className="mb-2">
-                        <label className="flex-grow-1">Start Time</label>
-                        
-                                <startTimeSlider/>
+            <Dropdown.Menu style={{
+                width: "200px",
+            }}>
+                <Form className="px-2">
+                    <Stack direction="horizontal">
+                        <label className="flex-grow-1">From</label>
+                        <label className="fw-bold">{fromText}</label>
                     </Stack>
-                    <Stack direction="horizontal" className="my-2">
-                        <label className="flex-grow-1">End Time</label>
-                    
-                                <endTimeSlider />
+                    <Form.Range min={0} max={24*2} step={1} value={fromValue} onChange={e => adjustRange({type: 'from', x: e.target.value})}/>
+                    {/* <Dropdown.Divider/> */}
+                    <Stack direction="horizontal">
+                        <label className="flex-grow-1">To</label>
+                        <label className="fw-bold">{toText}</label>
                     </Stack>
-                    </Form>
-
-       </Dropdown.Menu>
+                    <Form.Range min={0} max={24*2} step={1} value={toValue} onChange={e => adjustRange({type: 'to', x: e.target.value})}/>
+                </Form>
+            </Dropdown.Menu>
        </Dropdown>
     );
 }
