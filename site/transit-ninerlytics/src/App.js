@@ -117,25 +117,25 @@ const DateSelector = () => {
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
 
-    const [valueFM = months[0], setValueFM]=useState();
+    const [valueFM, setValueFM]=useState(months[0]);
     const handleSelectFM=(e)=>{
         console.log(e)
         setValueFM(e)
     }
 
-    const [valueFY = years[0], setValueFY]=useState();
+    const [valueFY, setValueFY]=useState(years[0]);
     const handleSelectFY=(e)=>{
         console.log(e)
         setValueFY(e)
     }
 
-    const [valueTM = months[11], setValueTM]=useState();
+    const [valueTM, setValueTM]=useState(months[11]);
     const handleSelectTM=(e)=>{
         console.log(e)
         setValueTM(e)
     }
 
-    const [valueTY = years[2], setValueTY]=useState();
+    const [valueTY, setValueTY]=useState(years[2]);
     const handleSelectTY=(e)=>{
         console.log(e)
         setValueTY(e)
