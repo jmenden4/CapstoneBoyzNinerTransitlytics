@@ -115,28 +115,27 @@ const TimeSelector = () => {
 const DateSelector = () => {
     const years = [2018, 2019, 2020]
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-    const days = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
 
 
-    const [valueFM, setValueFM]=useState();
+    const [valueFM = months[0], setValueFM]=useState();
     const handleSelectFM=(e)=>{
         console.log(e)
         setValueFM(e)
     }
 
-    const [valueFY, setValueFY]=useState();
+    const [valueFY = years[0], setValueFY]=useState();
     const handleSelectFY=(e)=>{
         console.log(e)
         setValueFY(e)
     }
 
-    const [valueTM, setValueTM]=useState();
+    const [valueTM = months[11], setValueTM]=useState();
     const handleSelectTM=(e)=>{
         console.log(e)
         setValueTM(e)
     }
 
-    const [valueTY, setValueTY]=useState();
+    const [valueTY = years[2], setValueTY]=useState();
     const handleSelectTY=(e)=>{
         console.log(e)
         setValueTY(e)
