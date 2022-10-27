@@ -101,9 +101,6 @@ const FilterSelector = () => {
 }
 
 const TimeSelector = () => {
-<<<<<<< HEAD
-=======
-
 
     const sliderConverter = (value) => {
         return value === 0
@@ -131,6 +128,30 @@ const TimeSelector = () => {
     const selectedStartTimes = (values) => {
             setStartTime(values)
     }
+
+    return (
+        <View bar={bar} style={styles.wrapper}>
+        <MultiSlider
+                                min={startMin}
+                                max={startMax}
+                                allowOverlap
+                                values={startTime}
+                                sliderLength={barWidth}
+                                selectedStartTimes={selectedStartTimes}
+                                enableLabel={true}
+                                trackStyle={{
+                                height: 6,
+                                borderRadius: 5,
+                                }}
+                                markerOffsetY={1}
+                                selectedStyle={{
+                                backgroundColor: $primary,
+                                }}
+                                unselectedStyle={{
+                                backgroundColor: "#FFFFFF",
+                                }}/>
+        </View>
+    )
     }
 
 
@@ -151,48 +172,11 @@ const TimeSelector = () => {
         const selectedEndTimes = (values) => {
                 setEndTime(values)
         }
-    }
->>>>>>> 40f882c (Actual time Slider)
-    return (
-        <Dropdown>
-            <Dropdown.Toggle>
-                TIME RANGE
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-<<<<<<< HEAD
-                {/* <TimeMenu/> */}
-            </Dropdown.Menu>
-        </Dropdown>
-    )
-=======
+
+        return (
+
             <View bar={bar} style={styles.wrapper}>
-                    <Form className="px-2">
-                    <Stack direction="horizontal" className="mb-2">
-                        <label className="flex-grow-1">Start Time</label>
-                        <MultiSlider
-                                min={startMin}
-                                max={startMax}
-                                allowOverlap
-                                values={startTime}
-                                sliderLength={barWidth}
-                                selectedStartTimes={selectedStartTimes}
-                                enableLabel={true}
-                                trackStyle={{
-                                height: 6,
-                                borderRadius: 5,
-                                }}
-                                markerOffsetY={1}
-                                selectedStyle={{
-                                backgroundColor: $primary,
-                                }}
-                                unselectedStyle={{
-                                backgroundColor: "#FFFFFF",
-                                }}/>
-                                <startTimeSlider/>
-                    </Stack>
-                    <Stack direction="horizontal" className="my-2">
-                        <label className="flex-grow-1">End Time</label>
-                        <MultiSlider
+            <MultiSlider
                                 min={endMin}
                                 max={endMax}
                                 allowOverlap
@@ -200,6 +184,7 @@ const TimeSelector = () => {
                                 sliderLength={barWidth}
                                 selectedEndTimes={selectedEndTimes}
                                 enableLabel={true}
+                                customLabel
                                 trackStyle={{
                                 height: 6,
                                 borderRadius: 5,
@@ -211,14 +196,32 @@ const TimeSelector = () => {
                                 unselectedStyle={{
                                 backgroundColor: "#FFFFFF",
                                 }}/>
+
+            </View>
+        )
+    }
+    return (
+        <Dropdown>
+            <Dropdown.Toggle>
+                TIME RANGE
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+                    <Form className="px-2">
+                    <Stack direction="horizontal" className="mb-2">
+                        <label className="flex-grow-1">Start Time</label>
+                        
+                                <startTimeSlider/>
+                    </Stack>
+                    <Stack direction="horizontal" className="my-2">
+                        <label className="flex-grow-1">End Time</label>
+                    
                                 <endTimeSlider />
                     </Stack>
                     </Form>
-                    </View>
+
        </Dropdown.Menu>
        </Dropdown>
     );
->>>>>>> 40f882c (Actual time Slider)
 }
 
 
