@@ -129,7 +129,6 @@ const StopsPage = () => {
         })
     }
 
-    console.info(silverStops, greenStops)
     // http://alexurquhart.github.io/free-tiles/
     // https://leaflet-extras.github.io/leaflet-providers/preview/
     return (
