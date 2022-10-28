@@ -159,14 +159,14 @@ const TimeSelector = () => {
             }}>
                 <Form className="px-2">
                     <Stack direction="horizontal">
-                        <label className="flex-grow-1">From</label>
-                        <label className="fw-bold">{fromText}</label>
+                        <label className="flex-grow-1 fw-bold">From</label>
+                        <label className="">{fromText}</label>
                     </Stack>
                     <Form.Range min={0} max={24*2} step={1} value={fromValue} onChange={e => adjustRange({type: 'from', x: e.target.value})}/>
                     {/* <Dropdown.Divider/> */}
                     <Stack direction="horizontal">
-                        <label className="flex-grow-1">To</label>
-                        <label className="fw-bold">{toText}</label>
+                        <label className="flex-grow-1 fw-bold">To</label>
+                        <label className="">{toText}</label>
                     </Stack>
                     <Form.Range min={0} max={24*2} step={1} value={toValue} onChange={e => adjustRange({type: 'to', x: e.target.value})}/>
                 </Form>
@@ -177,7 +177,7 @@ const TimeSelector = () => {
 
 const DateSelector = () => {
     const years = [2018, 2019, 2020]
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]
 
 
     const [valueFM, setValueFM]=useState(months[0]);
@@ -211,50 +211,54 @@ const DateSelector = () => {
                 Date
             </Dropdown.Toggle>
             <Dropdown.Menu>
-                <Form className='px-4'>
-                    <Stack direction = "horizontal" className = "firstdate">
-                        From: 
-                            <input className='day-form' type="number" name="count" id="count" min="1" max="31" placeholder="Day"></input>
-                    <Dropdown onSelect={handleSelectFM}>        
-                            <Dropdown.Toggle className = "date-btn" style={{ backgroundColor: '#ffff', color: '#08874C'}} >
-                            {valueFM}
+                <Form className="px-2 py-2">
+                    <Stack direction="horizontal" className="mb-3" gap={2}>
+                        <div className="flex-grow-1 fw-bold">From</div> 
+                        <input type="number" name="count" id="count" min="1" max="31" placeholder="Day"></input>
+                        <Dropdown onSelect={handleSelectFM}>        
+                            <Dropdown.Toggle variant="outline-secondary" size="sm">
+                                {valueFM}
                             </Dropdown.Toggle>
                             <Dropdown.Menu>
-                            {months.map((month, index) => (
-                                    <Dropdown.Item eventKey={month} key={index}>{month}</Dropdown.Item>))}
+                                {months.map((month, index) => (
+                                    <Dropdown.Item eventKey={month} key={index}>{month}</Dropdown.Item>)
+                                )}
                             </Dropdown.Menu>
-                    </Dropdown>
-                    <Dropdown onSelect={handleSelectFY}>
-                            <Dropdown.Toggle className = "date-btn" style={{ backgroundColor: '#ffff', color: '#08874C'}}>
+                        </Dropdown>
+                        <Dropdown onSelect={handleSelectFY}>
+                            <Dropdown.Toggle variant="outline-secondary" size="sm">
                                 {valueFY}
                             </Dropdown.Toggle>
                             <Dropdown.Menu>
                                 {years.map((year, index) => (
-                                    <Dropdown.Item eventKey={year} key={index}>{year}</Dropdown.Item>))}
+                                    <Dropdown.Item eventKey={year} key={index}>{year}</Dropdown.Item>)
+                                )}
                             </Dropdown.Menu>
-                    </Dropdown>    
+                        </Dropdown>    
                     </Stack>
-                    <Stack direction = "horizontal" className = "lastdate">
-                        To:
-                    <input className='day-form' type="number" name="count" id="count" min="1" max="31" placeholder="Day"></input>
-                    <Dropdown onSelect={handleSelectTM}>        
-                            <Dropdown.Toggle className = "date-btn" style={{ backgroundColor: '#ffff', color: '#08874C'}} >
-                            {valueTM}
+                    <Stack direction="horizontal" gap={2}>
+                        <div className="flex-grow-1 fw-bold">To</div>
+                        <input type="number" name="count" id="count" min="1" max="31" placeholder="Day"></input>
+                        <Dropdown onSelect={handleSelectTM}>        
+                            <Dropdown.Toggle variant="outline-secondary" size="sm">
+                                {valueTM}
                             </Dropdown.Toggle>
                             <Dropdown.Menu>
-                            {months.map((month, index) => (
-                                    <Dropdown.Item eventKey={month} key={index}>{month}</Dropdown.Item>))}
+                                {months.map((month, index) => (
+                                    <Dropdown.Item eventKey={month} key={index}>{month}</Dropdown.Item>)
+                                )}
                             </Dropdown.Menu>
-                    </Dropdown>
-                    <Dropdown onSelect={handleSelectTY}>
-                            <Dropdown.Toggle className = "date-btn" style={{ backgroundColor: '#ffff', color: '#08874C'}}>
+                        </Dropdown>
+                        <Dropdown onSelect={handleSelectTY}>
+                            <Dropdown.Toggle variant="outline-secondary" size="sm">
                                 {valueTY}
                             </Dropdown.Toggle>
                             <Dropdown.Menu>
                                 {years.map((year, index) => (
-                                    <Dropdown.Item eventKey={year} key={index}>{year}</Dropdown.Item>))}
+                                    <Dropdown.Item eventKey={year} key={index}>{year}</Dropdown.Item>)
+                                )}
                             </Dropdown.Menu>
-                    </Dropdown>
+                        </Dropdown>
                     </Stack>
                 </Form>
             </Dropdown.Menu>

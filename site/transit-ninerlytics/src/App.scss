@@ -13,21 +13,3 @@ html, body {
 .leaflet-container {
     height: 100%;
 }
-
-.date-btn{
-    margin: .1rem;
-}
-
-form input{
-    margin: .1rem;
-    width: 7.7ch;
-    height: 4.4ch;
-    border-radius: 8px;
-    border: .1ch solid #08874c;
-    color: #08874c;
-}
-
-input::placeholder{
-    opacity: .5;
-    color:'#08874C';
-}
