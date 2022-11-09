@@ -2,14 +2,14 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import mysql.connector
 
 import datetime
 from collections import defaultdict
 
 
-from sqlalchemy import Column, ForeignKey, Integer, String, Float, DateTime
+from sqlalchemy import Column, ForeignKey, Integer, String, Float, Date, Time
 from sqlalchemy import create_engine
+from sqlalchemy.sql import case
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
@@ -55,9 +55,13 @@ class StopData(Base):
     bus = Column("busid", Integer, ForeignKey("bus.busid"))
     route = Column("routeid", Integer, ForeignKey("route.routeid"))
     stop = Column("stopid", Integer, ForeignKey("stop.stopid"))
-    timestamp = Column("timestamp", DateTime, nullable=False)
+    # timestamp = Column("timestamp", DateTime, nullable=False)
+    date = Column("date", Date, nullable=False)
+    time = Column("time", Time, nullable=False)
     num_people_on = Column("numpeopleon", Integer)
     num_people_off = Column("numpeopleoff", Integer)
+    distance_from_last = Column("distancefromlast", Float)
+    wait_time = Column("waittime", Integer)
 
 
 # PYDANDIC SCHEMAS
@@ -93,9 +97,11 @@ class StopDataSchema(BaseModel):
     bus: int
     route: int
     stop: int
-    timestamp: datetime.datetime
+    date: datetime.date
+    time: datetime.time
     num_people_on: int
     num_people_off: int
+    distance_from_last: float
 
     class Config:
         orm_mode = True
@@ -143,7 +149,7 @@ def haversine(pt1, pt2):
 
 def main():
     db: Session = local_db_connection()
-    return
+    # return
 
     # buses = get_buses(db)
     # for bus in buses:
@@ -158,16 +164,11 @@ def main():
         }
     )
 
-    # return
     #import data in csv
-    # transit_data = pd.read_csv(r"data/Testdata.csv", **parse_args)
-    transit_data2 = pd.read_csv(r"data/Testdata2.csv", **parse_args)
-    transit_data3 = pd.read_csv(r"data/Testdata3.csv", **parse_args)
-
     df_all = pd.concat([
-        # transit_data,
-        transit_data2,
-        transit_data3,
+        pd.read_csv(r"data/Testdata.csv", **parse_args),
+        pd.read_csv(r"data/Testdata2.csv", **parse_args),
+        pd.read_csv(r"data/Testdata3.csv", **parse_args),
     ],
         ignore_index=True,
     )
@@ -268,19 +269,15 @@ def main():
         timestamp: datetime.datetime
         num_on: int = 0
         num_off: int = 0
+        dist_from_last: float = 0
         pos: tuple
 
-
-    travels = defaultdict(int)
 
 
     print("Grouping for stopdata")
     grouped = df_all.sort_values(by="Timestamp", ascending=True).groupby(["Bus"], as_index=False, sort=False)
     for name, group in grouped:
-        # if name != "2401":
-        #     continue
         print(name, group.Timestamp.min(), group.Timestamp.max())
-        # print(group)
 
         chunks = []
         current_chunk = None
@@ -300,9 +297,6 @@ def main():
             # different stop name
             is_new = stop != current_chunk.stop
 
-            # maximum time to consider new stop
-            # is_new |= pd.Timedelta(timestamp - stop_time).total_seconds() > 30*60
-
             # maximum distance between stop locations (even of same name)
             dist = haversine(current_chunk.pos, (lat, lng))
             if dist > 0.015:
@@ -318,6 +312,7 @@ def main():
                     route=route,
                     timestamp=timestamp,
                     pos=(lat, lng),
+                    dist_from_last=dist,
                 )
 
             # apply this row to the current chunk
@@ -331,12 +326,12 @@ def main():
         chunks.append(current_chunk)
 
         # check travels
-        for i in range(len(chunks) - 1):
-            c0 = chunks[i]
-            c1 = chunks[i+1]
-            dt = (c1.timestamp - c0.timestamp).total_seconds()
-            if dt < 3*60*60:
-                travels[tuple(sorted([c0.stop, c1.stop]))] += 1
+        # for i in range(len(chunks) - 1):
+        #     c0 = chunks[i]
+        #     c1 = chunks[i+1]
+        #     dt = (c1.timestamp - c0.timestamp).total_seconds()
+        #     if dt < 3*60*60:
+        #         travels[tuple(sorted([c0.stop, c1.stop]))] += 1
                 # print(c0)
                 # print(dt / 60)
                 # print()
@@ -344,28 +339,29 @@ def main():
     # for k, v in travels.items():
     #     print(k, v)
 
-    print(len(travels))
+    # print(len(travels))
 
-    for k in sorted(travels.keys(), key=lambda x: travels[x], reverse=True)[:100]:
-        print(k, travels[k])
+    # for k in sorted(travels.keys(), key=lambda x: travels[x], reverse=True)[:100]:
+    #     print(k, travels[k])
 
     # break
-
-        # bus_id = current_buses_keyed[name]
-        # objs = [
-        #     StopData(
-        #         bus=bus_id,
-        #         route=current_routes_keyed[x.route],
-        #         stop=current_stops_keyed[x.stop],
-        #         timestamp=x.timestamp,
-        #         num_people_on=x.num_on,
-        #         num_people_off=x.num_off,
-        #     )
-        #     for x in chunks
-        # ]
-        # print(f"Inserting {len(objs)} stopdata rows...")
-        # db.bulk_save_objects(objs)
-        # db.commit()
+        bus_id = current_buses_keyed[name]
+        objs = [
+            StopData(
+                bus=bus_id,
+                route=current_routes_keyed[x.route],
+                stop=current_stops_keyed[x.stop],
+                date=x.timestamp.date(),
+                time=x.timestamp.time(),
+                num_people_on=x.num_on,
+                num_people_off=x.num_off,
+                distance_from_last=x.dist_from_last,
+            )
+            for x in chunks
+        ]
+        print(f"Inserting {len(objs)} stopdata rows...")
+        db.bulk_save_objects(objs)
+        db.commit()
 
 
 
@@ -443,5 +439,80 @@ def main():
     # print(len(grouped))
 
 
+def update_waittimes():
+    db: Session = local_db_connection()
+
+
+    for stop in get_stops(db):
+        print(stop.id, stop.name)
+
+        print("Fetching")
+
+        stop_data = db.query(
+            StopData.id,
+            StopData.bus,
+            StopData.date,
+            StopData.time,
+        ).where(
+            (StopData.stop == stop.id)
+        ).order_by(
+            StopData.date,
+            StopData.time,
+        ).all()
+
+        print("Calculating")
+
+        updates = {}
+
+        row0 = None
+        timestamp0 = None
+        for row in stop_data:
+            timestamp = datetime.datetime.combine(row.date, row.time)
+            # print(row)
+            wait_time_s = None
+            if timestamp0 is not None:
+                wait_time_s = (timestamp - timestamp0).total_seconds()
+                # ignore beyond threshold likely for next day
+                # if wait_time_s > 10 * 3600:
+                #     wait_time_s = None
+
+            # if wait_time_s == 1:
+            #     print(row0)
+            #     print(row)
+            #     print()
+            updates[row.id] = wait_time_s
+
+            row0 = row
+            timestamp0 = timestamp
+        
+        print("Updating")
+
+        batch_size = 200
+        update_items = list(updates.items())
+        count = 0
+        n = len(updates)
+        for i in range(0, n, batch_size):
+            batch = {a: b for a, b in update_items[i:i+batch_size]}
+            
+            db.query(StopData).filter(StopData.id.in_(batch)).update({
+                StopData.wait_time: case(batch, value=StopData.id),
+            }, synchronize_session=False)
+
+            count += len(batch)
+            print(f"{count} / {n}")
+
+        db.commit()
+        print()
+
+        # break
+
+
+    db.close()
+
+
+
+
+
 if __name__ == "__main__":
-    main()
+    # main()
+    update_waittimes()
