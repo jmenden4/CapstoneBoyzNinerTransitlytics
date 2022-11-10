@@ -15,7 +15,20 @@ from sqlalchemy.orm import sessionmaker, Session
 
 from pydantic import BaseModel
 
-SQLALCHEMY_DB_URL = "mysql://datauser:datauser@localhost/transitninerlytics"
+import sshtunnel
+
+server = sshtunnel.SSHTunnelForwarder(
+    "transit-ninerlytics.com",
+    ssh_username="ec2-user",
+    ssh_pkey=r"C:\Users\Jon\Documents\School\Fall 2022\ITCS-4155\admin.pem",
+    remote_bind_address=("database-2.ccxeki6fimht.us-east-2.rds.amazonaws.com", 3306),
+    local_bind_address=("127.0.0.1", 5445),
+)
+server.start()
+SQLALCHEMY_DB_URL = "mysql://admin:CapstoneBoyz@localhost:5445/transitninerlytics"
+
+
+# SQLALCHEMY_DB_URL = "mysql://datauser:datauser@localhost/transitninerlytics"
 engine = create_engine(SQLALCHEMY_DB_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -149,7 +162,8 @@ def haversine(pt1, pt2):
 
 def main():
     db: Session = local_db_connection()
-    # return
+    print(db)
+    return
 
     # buses = get_buses(db)
     # for bus in buses:
@@ -511,8 +525,16 @@ def update_waittimes():
 
 
 
+def main2():
+    db: Session = local_db_connection()
+    print(db)
+    for row in db.query(Stop).all():
+        print(row)
+    db.close()
+
 
 
 if __name__ == "__main__":
     # main()
-    update_waittimes()
+    # main2()
+    # update_waittimes()

@@ -2,7 +2,9 @@ from typing import Union
 from fastapi import APIRouter, FastAPI, Depends
 
 from .database import get_db_session
+from .database.models import Bus, Route, Stop, StopData
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from pydantic import BaseModel
 
@@ -58,29 +60,23 @@ def fetch_stop_info(
     filters: DataFilterSchema,
     db: Session = Depends(get_db_session),
 ):
-    print(filters)
-    print(db)
-    
-    return [
-        StopInfoSchema(
-            id=10,
-            num_times_stopped=15,
-            total_people_on=40,
-            total_people_off=50,
-            avg_wait_time=304.55,
-            min_wait_time=123,
-            max_wait_time=600,
-        ),
-        StopInfoSchema(
-            id=10,
-            num_times_stopped=15,
-            total_people_on=40,
-            total_people_off=50,
-            avg_wait_time=304.55,
-            min_wait_time=123,
-            max_wait_time=600,
-        ),
-    ]
+    results = db.query(
+        StopData.stop.label("id"),
+        func.count(StopData.id).label("num_times_stopped"),
+        func.sum(StopData.num_people_on).label("total_people_on"),
+        func.sum(StopData.num_people_off).label("total_people_off"),
+        func.avg(StopData.wait_time).label("avg_wait_time"),
+        func.min(StopData.wait_time).label("min_wait_time"),
+        func.max(StopData.wait_time).label("max_wait_time"),
+    ).select_from(StopData).group_by(StopData.stop).where(
+        StopData.date.between(filters.min_date, filters.max_date),
+        StopData.time.between(filters.min_time, filters.max_time),
+        StopData.bus.in_(filters.bus_ids),
+        StopData.route.in_(filters.route_ids),
+    ).all()
+
+    return results
+
 
 
 
