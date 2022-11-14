@@ -18,15 +18,13 @@ root_router = APIRouter(prefix="/api")
 
 class BusSchema(BaseModel):
     id: int
-    code: int
+    code: str
 
 @root_router.get("/data/bus", response_model=List[BusSchema])
-def fetch_routes(
+def fetch_buses(
     db: Session = Depends(get_db_session),
 ):
-    results = db.query(
-        Bus.id.label("id"),
-        Route.code.label("Route")).all()
+    results = db.query(Bus).all()
 
     return results
 
@@ -40,9 +38,7 @@ class RouteSchema(BaseModel):
 def fetch_routes(
     db: Session = Depends(get_db_session),
 ):
-    results = db.query(
-        Route.id.label("id"),
-        Route.name.label("route")).all()
+    results = db.query(Route).all()
 
     return results
 
@@ -51,14 +47,14 @@ def fetch_routes(
 class StopSchema(BaseModel):
     id: int
     stop: str
+    long: float
+    lat: float
     
 @root_router.get("/data/stops", response_model=List[StopSchema])
-def fetch_routes(
+def fetch_stops(
     db: Session = Depends(get_db_session),
 ):
-    results = db.query(
-        Stop.id.label("id"),
-        Stop.stop.label("bus_id")).all()
+    results = db.query(Stop).all()
 
     return results
 
@@ -127,13 +123,14 @@ class BusInfoSchema(BaseModel):
     num_times_stopped: int
     total_people_on: int
     total_people_off: int
+    distance: float
     avg_wait_time: float
     min_wait_time: int
     max_wait_time: int
 
 
 @root_router.post("/data/businfo", response_model=List[BusInfoSchema])
-def fetch_stop_info(
+def fetch_bus_info(
     filters: DataFilterSchema,
     db: Session = Depends(get_db_session),
 ):
@@ -142,6 +139,7 @@ def fetch_stop_info(
         func.count(StopData.id).label("num_times_stopped"),
         func.sum(StopData.num_people_on).label("total_people_on"),
         func.sum(StopData.num_people_off).label("total_people_off"),
+        func.sum(StopData.distance_from_last.label("distance_from_last")),
         func.avg(StopData.wait_time).label("avg_wait_time"),
         func.min(StopData.wait_time).label("min_wait_time"),
         func.max(StopData.wait_time).label("max_wait_time"),
