@@ -13,14 +13,17 @@ from typing import Optional, List
 
 root_router = APIRouter(prefix="/api")
 
+class ORMBaseModel(BaseModel):
+    class Config:
+        orm_mode = True
 
 # GET /api/buses - get list of buses (all)
 
-class BusSchema(BaseModel):
+class BusSchema(ORMBaseModel):
     id: int
     code: str
 
-@root_router.get("/data/bus", response_model=List[BusSchema])
+@root_router.get("/bus", response_model=List[BusSchema])
 def fetch_buses(
     db: Session = Depends(get_db_session),
 ):
@@ -30,32 +33,32 @@ def fetch_buses(
 
 # GET /api/routes - get list of routes (all)
 
-class RouteSchema(BaseModel):
+class RouteSchema(ORMBaseModel):
     id: int
     name: str
 
-@root_router.get("/data/routes", response_model=List[RouteSchema])
+@root_router.get("/routes", response_model=List[RouteSchema])
 def fetch_routes(
     db: Session = Depends(get_db_session),
-):
+    ):
     results = db.query(Route).all()
-
     return results
+    
 
 # GET /api/stops - get list of stops (all)
 
-class StopSchema(BaseModel):
+class StopSchema(ORMBaseModel):
     id: int
-    stop: str
-    long: float
-    lat: float
-    
-@root_router.get("/data/stops", response_model=List[StopSchema])
+    name: str
+    latitude: float
+    longitude: float
+
+@root_router.get("/stops", response_model=List[StopSchema])
 def fetch_stops(
     db: Session = Depends(get_db_session),
-):
-    results = db.query(Stop).all()
-
+    ):
+    results = db.query(
+        Stop).all()
     return results
 
 
@@ -123,10 +126,7 @@ class BusInfoSchema(BaseModel):
     num_times_stopped: int
     total_people_on: int
     total_people_off: int
-    distance: float
-    avg_wait_time: float
-    min_wait_time: int
-    max_wait_time: int
+    distance_from_last: float
 
 
 @root_router.post("/data/businfo", response_model=List[BusInfoSchema])
@@ -139,10 +139,7 @@ def fetch_bus_info(
         func.count(StopData.id).label("num_times_stopped"),
         func.sum(StopData.num_people_on).label("total_people_on"),
         func.sum(StopData.num_people_off).label("total_people_off"),
-        func.sum(StopData.distance_from_last.label("distance_from_last")),
-        func.avg(StopData.wait_time).label("avg_wait_time"),
-        func.min(StopData.wait_time).label("min_wait_time"),
-        func.max(StopData.wait_time).label("max_wait_time"),
+        func.sum(StopData.distance_from_last).label("distance_from_last"),
     ).select_from(StopData).group_by(StopData.route).where(
         StopData.date.between(filters.min_date, filters.max_date),
         StopData.time.between(filters.min_time, filters.max_time),
