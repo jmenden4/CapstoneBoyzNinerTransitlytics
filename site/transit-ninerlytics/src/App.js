@@ -15,7 +15,7 @@ import UNCC_LOGO from './resources/UNC_Charlotte_Primary_Horiz_Logo.png'
 import {BrowserRouter, Routes, Route, Navigate, Outlet} from 'react-router-dom'
 import {LinkContainer} from 'react-router-bootstrap'
 
-import { createContext, useContext, useReducer, useState } from 'react'
+import { createContext, useContext, useReducer, useState , useEffect} from 'react'
 
 import StopsPage from './app/stopsPage'
 import BusesPage from './app/busesPage'
@@ -29,10 +29,9 @@ const AppContext = createContext()
 
 
 const FilterSelector = () => {
-    const {filter, setFilter} = useContext(AppContext)
-    const routes = ["Gold", "Silver", "Green"]
-    const buses = [2401, 2402, 2403, 2404, 2405, 2406, 2407, 2408, 2409, 2410, 2411, 2412]
 
+    const {filter, setFilter, buses, routes} = useContext(AppContext)
+    
     const toggleRouteFilter = (key) => {
         const newRoutes = filter.routes
         const i = newRoutes.indexOf(key)
@@ -84,7 +83,7 @@ const FilterSelector = () => {
                         <Button variant="link" size="sm" onClick={e => setAllRoutesFilter(false)}>None</Button>
                     </Stack>
                     {routes.map(x => (
-                        <Form.Check key={x} label={x} checked={filter.routes.includes(x)} onChange={e => toggleRouteFilter(x)}/>
+                        <Form.Check key={x.id} label={x.name} checked={filter.routes.includes(x)} onChange={e => toggleRouteFilter(x)}/>
                     ))}
                     <Stack direction="horizontal" className="my-2">
                         <label className="flex-grow-1">Buses</label>
@@ -92,7 +91,7 @@ const FilterSelector = () => {
                         <Button variant="link" size="sm" onClick={e => setAllBusesFilter(false)}>None</Button>
                     </Stack>
                     {buses.map(x => (
-                        <Form.Check key={x} label={x} checked={filter.buses.includes(x)} onChange={e => toggleBusFilter(x)}/>
+                        <Form.Check key={x.id} label={x.code} checked={filter.buses.includes(x)} onChange={e => toggleBusFilter(x)}/>
                     ))}
                 </Form>
             </Dropdown.Menu>
@@ -322,14 +321,43 @@ const Layout = () => {
 
 
 const App = () => {
-    const [filter, setFilter] = useState({
-        routes: ["Gold", "Silver"],
-        buses: [2405, 2406, 2408],
-    })
+
+        const[buses, setBus] = useState([]);
+        const[routes, setRoutes] = useState([]);
+        const[stops, setStops] = useState([]);
+    
+        const [filter, setFilter] = useState({
+            routes: [],
+            buses: [],
+        })
+    
+    
+        const fetchBusData = async () => {
+            fetch("https://transit-ninerlytics.com/api/buses").then(response => response.json())
+            .then(data => setBus(data));
+            }
+    
+        const fetchRoutesData = async () => {
+            fetch("https://transit-ninerlytics.com/api/routes").then(response => response.json())
+            .then(data => setRoutes(data));
+                }
+    
+        const fetchStopsData = async () => {
+            fetch("https://transit-ninerlytics.com/api/stops").then(response => response.json())
+            .then(data => setStops(data));
+                    }
+    
+        useEffect(() => {
+           
+            fetchBusData()
+            fetchStopsData()
+            fetchRoutesData()
+    
+        },[]);
 
     return (
         <BrowserRouter>
-            <AppContext.Provider value={{filter, setFilter}}>
+            <AppContext.Provider value={{filter, setFilter, buses, routes, stops}}>
                 <Routes>
                     <Route path="/" element={<Layout/>}>
                         <Route index element={<Navigate to="stops" replace />} />
@@ -341,5 +369,6 @@ const App = () => {
         </BrowserRouter>
     )
 }
+
 
 export default App
