@@ -23,7 +23,7 @@ class BusSchema(ORMBaseModel):
     id: int
     code: str
 
-@root_router.get("/bus", response_model=List[BusSchema])
+@root_router.get("/buses", response_model=List[BusSchema])
 def fetch_buses(
     db: Session = Depends(get_db_session),
 ):
@@ -135,12 +135,12 @@ def fetch_bus_info(
     db: Session = Depends(get_db_session),
 ):
     results = db.query(
-        StopData.stop.label("id"),
+        StopData.bus.label("id"),
         func.count(StopData.id).label("num_times_stopped"),
         func.sum(StopData.num_people_on).label("total_people_on"),
         func.sum(StopData.num_people_off).label("total_people_off"),
         func.sum(StopData.distance_from_last).label("distance_from_last"),
-    ).select_from(StopData).group_by(StopData.route).where(
+    ).select_from(StopData).group_by(StopData.bus).where(
         StopData.date.between(filters.min_date, filters.max_date),
         StopData.time.between(filters.min_time, filters.max_time),
         StopData.bus.in_(filters.bus_ids),
