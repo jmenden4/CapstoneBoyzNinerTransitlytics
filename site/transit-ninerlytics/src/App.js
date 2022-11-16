@@ -183,7 +183,7 @@ const TimeSelector = () => {
 }
 
 const DateSelector = () => {
-   const {valueFM, setValueFM, valueFY, setValueFY, valueTM, setValueTM, valueTY, setValueTY, valueStartDay, setValueStartDay, valueEndDay, setValueEndDay} = useContext(AppContext)
+    const {valueFM, setValueFM, valueFY, setValueFY, valueTM, setValueTM, valueTY, setValueTY, valueStartDay, setValueStartDay, valueEndDay, setValueEndDay} = useContext(AppContext)
     const years = [2018, 2019, 2020]
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]
 
@@ -341,11 +341,13 @@ const App = () => {
             buses: [],
         })
 
-        const [valueFM, setValueFM]=useState(['Jan']);
-        const [valueFY, setValueFY]=useState([2018]);
-        const [valueTM, setValueTM]=useState(['Dec']);
-        const [valueTY, setValueTY]=useState([2020]);
-        const[valueDay, setValueDay]=useState([1])
+        const [valueFM, setValueFM]=useState(['Jan'])
+        const [valueFY, setValueFY]=useState([2018])
+        const [valueTM, setValueTM]=useState(['Dec'])
+        const [valueTY, setValueTY]=useState([2020])
+        const[valueStartDay, setValueStartDay]=useState([1])
+        const[valueEndDay, setValueEndDay]=useState([30])
+
 
         
     
@@ -375,7 +377,7 @@ const App = () => {
 
     return (
         <BrowserRouter>
-            <AppContext.Provider value={{filter, setFilter, buses, routes, stops, valueFM, setValueFM, valueFY, setValueFY, valueTM, setValueTM, valueTY, setValueTY, setValueDay, valueDay}}>
+            <AppContext.Provider value={{filter, setFilter, buses, routes, stops, valueFM, setValueFM, valueFY, setValueFY, valueTM, setValueTM, valueTY, setValueTY, setValueStartDay, valueStartDay, setValueEndDay, valueEndDay}}>
                 <Routes>
                     <Route path="/" element={<Layout/>}>
                         <Route index element={<Navigate to="stops" replace />} />
