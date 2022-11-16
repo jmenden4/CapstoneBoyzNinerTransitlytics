@@ -19,11 +19,10 @@ import { createContext, useContext, useReducer, useState , useEffect} from 'reac
 
 import StopsPage from './app/stopsPage'
 import BusesPage from './app/busesPage'
-import DropdownItem from 'react-bootstrap/esm/DropdownItem'
 
 
 
-const AppContext = createContext()
+export const AppContext = createContext()
 
 
 
@@ -223,12 +222,21 @@ const DateSelector = () => {
                 <Form className="px-2 py-2">
                     <Stack direction="horizontal" className="mb-3" gap={2}>
                         <div className="flex-grow-1 fw-bold">From</div> 
-                        <input type="number" name="count" id="count" min="1" max="31" placeholder="Day" onChange={handleSelectStartDay()}>{valueStartDay}</input>
+                        <Dropdown onSelect={handleSelectStartDay}>        
+                            <Dropdown.Toggle variant="outline-secondary" size="sm">
+                                {valueStartDay}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu className="limit-height-dropdown">
+                                {Array(31).fill().map((_, index) => (
+                                    <Dropdown.Item eventKey={index+1} key={index+1}>{index + 1}</Dropdown.Item>)
+                                )}
+                            </Dropdown.Menu>
+                        </Dropdown>
                         <Dropdown onSelect={handleSelectFM}>        
                             <Dropdown.Toggle variant="outline-secondary" size="sm">
                                 {valueFM}
                             </Dropdown.Toggle>
-                            <Dropdown.Menu>
+                            <Dropdown.Menu className="limit-height-dropdown">
                                 {months.map((month, index) => (
                                     <Dropdown.Item eventKey={month} key={index}>{month}</Dropdown.Item>)
                                 )}
@@ -238,7 +246,7 @@ const DateSelector = () => {
                             <Dropdown.Toggle variant="outline-secondary" size="sm">
                                 {valueFY}
                             </Dropdown.Toggle>
-                            <Dropdown.Menu>
+                            <Dropdown.Menu className="limit-height-dropdown">
                                 {years.map((year, index) => (
                                     <Dropdown.Item eventKey={year} key={index}>{year}</Dropdown.Item>)
                                 )}
@@ -247,12 +255,21 @@ const DateSelector = () => {
                     </Stack>
                     <Stack direction="horizontal" gap={2}>
                         <div className="flex-grow-1 fw-bold">To</div>
-                        <input type="number" name="count" id="count" min="1" max="31" placeholder="Day" onChange={handleSelectEndDay()}>{valueEndDay}</input>
+                        <Dropdown onSelect={handleSelectEndDay}>        
+                            <Dropdown.Toggle variant="outline-secondary" size="sm">
+                                {valueEndDay}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu className="limit-height-dropdown">
+                                {Array(31).fill().map((_, index) => (
+                                    <Dropdown.Item eventKey={index+1} key={index+1}>{index + 1}</Dropdown.Item>)
+                                )}
+                            </Dropdown.Menu>
+                        </Dropdown>
                         <Dropdown onSelect={handleSelectTM}>        
                             <Dropdown.Toggle variant="outline-secondary" size="sm">
                                 {valueTM}
                             </Dropdown.Toggle>
-                            <Dropdown.Menu>
+                            <Dropdown.Menu className="limit-height-dropdown">
                                 {months.map((month, index) => (
                                     <Dropdown.Item eventKey={month} key={index}>{month}</Dropdown.Item>)
                                 )}
@@ -262,7 +279,7 @@ const DateSelector = () => {
                             <Dropdown.Toggle variant="outline-secondary" size="sm">
                                 {valueTY}
                             </Dropdown.Toggle>
-                            <Dropdown.Menu>
+                            <Dropdown.Menu className="limit-height-dropdown">
                                 {years.map((year, index) => (
                                     <Dropdown.Item eventKey={year} key={index}>{year}</Dropdown.Item>)
                                 )}

@@ -9,7 +9,7 @@ import L from 'leaflet';
 
 import {useSearchParams, useNavigate, createSearchParams} from 'react-router-dom'
 import greenicon from '../resources/greenmarker.png'
-import AppContext from '../App'
+import {AppContext} from '../App.js'
 
 
 
@@ -32,8 +32,6 @@ const StopsPage = () => {
 
     var startdate = valueFY + "-" + valueFM + "-" + valueStartDay
     var enddate = valueTY + "-" + valueTM + "-" + valueEndDay
-
-
 
     
     // datatypes to display in sidebar dropdown
