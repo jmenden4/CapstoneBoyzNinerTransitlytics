@@ -100,7 +100,7 @@ const FilterSelector = () => {
 }
 
 const TimeSelector = () => {
-
+    const {valueStartTime, setValueStartTime, valueEndTime, setValueEndTime} = useContext(AppContext)
     const [range, adjustRange] = useReducer((currentRange, action) => {
         const [fromValue, toValue] = currentRange
         const {type, x} = action
@@ -141,6 +141,14 @@ const TimeSelector = () => {
     const fromText = xToTimeText(fromValue)
     const toText = xToTimeText(toValue)
 
+    const handleTimeStartChange=(e)=>{
+        setValueStartTime(e)
+    }
+
+    const handleTimeEndChange=(e)=>{
+        setValueEndTime(e)
+    }
+
     // let dropdownText = null
     // if(fromValue == 0 && toValue == 48) {
     //     dropdownText = 'All Day'
@@ -175,34 +183,36 @@ const TimeSelector = () => {
 }
 
 const DateSelector = () => {
+   const {valueFM, setValueFM, valueFY, setValueFY, valueTM, setValueTM, valueTY, setValueTY, valueStartDay, setValueStartDay, valueEndDay, setValueEndDay} = useContext(AppContext)
     const years = [2018, 2019, 2020]
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]
 
-
-    const [valueFM, setValueFM]=useState(months[0]);
     const handleSelectFM=(e)=>{
         console.log(e)
         setValueFM(e)
     }
-
-    const [valueFY, setValueFY]=useState(years[0]);
+    
     const handleSelectFY=(e)=>{
         console.log(e)
         setValueFY(e)
     }
 
-    const [valueTM, setValueTM]=useState(months[11]);
+ 
     const handleSelectTM=(e)=>{
         setValueTM(e)
     }
 
-    const [valueTY, setValueTY]=useState(years[2]);
     const handleSelectTY=(e)=>{
         setValueTY(e)
-        
     }
 
-    
+    const handleSelectStartDay=(e)=>{
+        setValueStartDay(e)
+    }
+
+    const handleSelectEndDay=(e)=>{
+        setValueEndDay(e)
+    }
 
     return (
         <Dropdown autoClose = "outside">
@@ -213,7 +223,7 @@ const DateSelector = () => {
                 <Form className="px-2 py-2">
                     <Stack direction="horizontal" className="mb-3" gap={2}>
                         <div className="flex-grow-1 fw-bold">From</div> 
-                        <input type="number" name="count" id="count" min="1" max="31" placeholder="Day"></input>
+                        <input type="number" name="count" id="count" min="1" max="31" placeholder="Day" onChange={handleSelectStartDay()}>{valueStartDay}</input>
                         <Dropdown onSelect={handleSelectFM}>        
                             <Dropdown.Toggle variant="outline-secondary" size="sm">
                                 {valueFM}
@@ -237,7 +247,7 @@ const DateSelector = () => {
                     </Stack>
                     <Stack direction="horizontal" gap={2}>
                         <div className="flex-grow-1 fw-bold">To</div>
-                        <input type="number" name="count" id="count" min="1" max="31" placeholder="Day"></input>
+                        <input type="number" name="count" id="count" min="1" max="31" placeholder="Day" onChange={handleSelectEndDay()}>{valueEndDay}</input>
                         <Dropdown onSelect={handleSelectTM}>        
                             <Dropdown.Toggle variant="outline-secondary" size="sm">
                                 {valueTM}
@@ -330,6 +340,14 @@ const App = () => {
             routes: [],
             buses: [],
         })
+
+        const [valueFM, setValueFM]=useState(['Jan']);
+        const [valueFY, setValueFY]=useState([2018]);
+        const [valueTM, setValueTM]=useState(['Dec']);
+        const [valueTY, setValueTY]=useState([2020]);
+        const[valueDay, setValueDay]=useState([1])
+
+        
     
     
         const fetchBusData = async () => {
@@ -357,7 +375,7 @@ const App = () => {
 
     return (
         <BrowserRouter>
-            <AppContext.Provider value={{filter, setFilter, buses, routes, stops}}>
+            <AppContext.Provider value={{filter, setFilter, buses, routes, stops, valueFM, setValueFM, valueFY, setValueFY, valueTM, setValueTM, valueTY, setValueTY, setValueDay, valueDay}}>
                 <Routes>
                     <Route path="/" element={<Layout/>}>
                         <Route index element={<Navigate to="stops" replace />} />

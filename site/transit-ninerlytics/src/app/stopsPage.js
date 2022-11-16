@@ -1,12 +1,15 @@
-import { useEffect } from 'react'
-import Col from 'react-bootstrap/Col'
-import Dropdown from 'react-bootstrap/Dropdown'
+import { useEffect, useContext} from 'react';
+import Col from 'react-bootstrap/Col';
+import Dropdown from 'react-bootstrap/Dropdown';
 
-import { TileLayer, MapContainer, Marker, Popup } from 'react-leaflet'
+import { TileLayer, MapContainer, Marker, Popup, Polygon, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+//import Marker from 'react-leaflet-enhanced-marker';
 
 import {useSearchParams, useNavigate, createSearchParams} from 'react-router-dom'
+import greenicon from '../resources/greenmarker.png'
+import AppContext from '../App'
 
 
 
@@ -21,9 +24,16 @@ L.Icon.Default.mergeOptions({
 
 
 
+
 const StopsPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const navigate = useNavigate()
+    const {valueFM, setValueFM, valueFY, setValueFY, valueTM, setValueTM, valueTY, setValueTY, valueStartDay, setValueStartDay, valueEndDay, setvalueEndDay} = useContext(AppContext)
+
+    var startdate = valueFY + "-" + valueFM + "-" + valueStartDay
+    var enddate = valueTY + "-" + valueTM + "-" + valueEndDay
+
+
 
     
     // datatypes to display in sidebar dropdown
@@ -129,6 +139,29 @@ const StopsPage = () => {
         })
     }
 
+    let greenIcon = L.icon({iconUrl: greenicon, iconSize: [35, 35],});
+
+    /*
+    const requestOptions = {
+        method: 'POST',
+        headers: { 
+            'min_date': 'application/json',
+            'max_date': 'Bearer my-token',
+            'min_time': 'foobar',
+            'max_time': '',
+            'bus_ids': [],
+            'route_ids': []
+        },
+        body: JSON.stringify({ title: 'React POST Request Example' })
+    };
+
+    
+    const fetchBusData = async () => {
+    fetch("https://transit-ninerlytics.com/api/buses", requestOptions).then(response => response.json())
+    .then(data => setBus(data));
+        }
+*/
+
     // http://alexurquhart.github.io/free-tiles/
     // https://leaflet-extras.github.io/leaflet-providers/preview/
     return (
@@ -150,18 +183,26 @@ const StopsPage = () => {
                         url="http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
                     />
                     {silverStops.map((x, i) => (
-                        <Marker key={i} position={[x.coordinates[0], x.coordinates[1]]}>
+                        <Marker key={i} position={[x.coordinates[0], x.coordinates[1]]} icon={greenIcon} >
+                            <Tooltip opacity={.3} direction={'center'} permanent>
+                                13
+                            </Tooltip>
                             <Popup>
                                 {x.name}
                             </Popup>
                         </Marker>
+                        //<PolygonWithText key={i} text={"12"} coords={[x.coordinates[0], x.coordinates[1]]} />
+                        
                     ))}
                     {greenStops.map((x, i) => (
-                        <Marker key={i} position={[x.coordinates[0], x.coordinates[1]]}>
-                            <Popup>
-                                {x.name}
-                            </Popup>
-                        </Marker>
+                        <Marker key={i} position={[x.coordinates[0], x.coordinates[1]]} icon={greenIcon} >
+                        <Tooltip opacity={.3} direction={'center'} permanent>
+                            13
+                        </Tooltip>
+                        <Popup>
+                            {x.name}
+                        </Popup>
+                    </Marker>
                     ))}
                     
                 </MapContainer>
@@ -179,6 +220,18 @@ const StopsPage = () => {
                     ))}
                     </Dropdown.Menu>
                 </Dropdown>
+                <table style={{border: '1px solid black'}}>
+                    <tr>
+                        <td>Cato Hall</td>
+                        <td>12</td>    
+                    </tr>
+                    <tr>
+                        <td>North Deck</td>
+                        <td>14</td>    
+                    </tr>
+                </table>
+
+                
             </div>
         </>
     )
