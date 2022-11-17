@@ -1,4 +1,4 @@
-import { useEffect, useContext} from 'react';
+import { useEffect, useContext, useState} from 'react';
 import Col from 'react-bootstrap/Col';
 import Dropdown from 'react-bootstrap/Dropdown';
 
@@ -28,10 +28,34 @@ L.Icon.Default.mergeOptions({
 const StopsPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const navigate = useNavigate()
-    const {valueFM, setValueFM, valueFY, setValueFY, valueTM, setValueTM, valueTY, setValueTY, valueStartDay, setValueStartDay, valueEndDay, setvalueEndDay} = useContext(AppContext)
+    const {filter, setFilter, buses, routes, stops, valueFM, setValueFM, valueFY, setValueFY, valueTM, setValueTM, valueTY, setValueTY, valueStartDay, setValueStartDay, valueEndDay, setvalueEndDay, startDate, endDate,  valueStartTime, setValueStartTime, valueEndTime, setValueEndTime} = useContext(AppContext)
+    
+    const[stopinfo, setStopInfo] = useState([]);
+    
+    const requestOptions = {
+        mode: 'no-cors',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            'min_date': '2018-02-02',
+            'max_date': '2019-01-01',
+            'min_time': '00:00:00',
+            'max_time': '23:00:00',
+            'bus_ids': [2,3,4],
+            'route_ids': [1,2,3]
+         })
+    };
+    
+    const fetchStopData = async () => {
+    fetch("https://transit-ninerlytics.com/api/data/stopinfo", requestOptions).then(response => response.json())
+    .then(data => setStopInfo(data))
+        }
 
-    var startdate = valueFY + "-" + valueFM + "-" + valueStartDay
-    var enddate = valueTY + "-" + valueTM + "-" + valueEndDay
+    useEffect(() => {
+        fetchStopData()
+      },[]);
+
+  console.log(stopinfo)
 
     
     // datatypes to display in sidebar dropdown
@@ -109,6 +133,7 @@ const StopsPage = () => {
     const currentItem = sidebar.find(x => x.key === dataType)
 
 
+
     // navigate to a default datatype when url isn't valid
     useEffect(() => {
         if(currentItem == null) {
@@ -139,26 +164,8 @@ const StopsPage = () => {
 
     let greenIcon = L.icon({iconUrl: greenicon, iconSize: [35, 35],});
 
-    /*
-    const requestOptions = {
-        method: 'POST',
-        headers: { 
-            'min_date': 'application/json',
-            'max_date': 'Bearer my-token',
-            'min_time': 'foobar',
-            'max_time': '',
-            'bus_ids': [],
-            'route_ids': []
-        },
-        body: JSON.stringify({ title: 'React POST Request Example' })
-    };
 
-    
-    const fetchBusData = async () => {
-    fetch("https://transit-ninerlytics.com/api/buses", requestOptions).then(response => response.json())
-    .then(data => setBus(data));
-        }
-*/
+
 
     // http://alexurquhart.github.io/free-tiles/
     // https://leaflet-extras.github.io/leaflet-providers/preview/
@@ -182,9 +189,7 @@ const StopsPage = () => {
                     />
                     {silverStops.map((x, i) => (
                         <Marker key={i} position={[x.coordinates[0], x.coordinates[1]]} icon={greenIcon} >
-                            <Tooltip opacity={.3} direction={'center'} permanent>
-                                13
-                            </Tooltip>
+                             <Tooltip direction="right" offset={[0, 0]} opacity={1} permanent>{String(x.coordinates[0]).slice(-1)}</Tooltip>
                             <Popup>
                                 {x.name}
                             </Popup>
@@ -194,9 +199,7 @@ const StopsPage = () => {
                     ))}
                     {greenStops.map((x, i) => (
                         <Marker key={i} position={[x.coordinates[0], x.coordinates[1]]} icon={greenIcon} >
-                        <Tooltip opacity={.3} direction={'center'} permanent>
-                            13
-                        </Tooltip>
+                        <Tooltip direction="right" offset={[0, 0]} opacity={1} permanent>{String(x.coordinates[0]).slice(-1)}</Tooltip>
                         <Popup>
                             {x.name}
                         </Popup>

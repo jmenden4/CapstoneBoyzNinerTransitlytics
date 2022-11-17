@@ -155,6 +155,11 @@ const TimeSelector = () => {
     //     dropdownText = `${fromText} - ${toText}`
     // }
 
+    const twoCalls = e => {
+        adjustRange({type: 'from', x: e.target.value});
+        handleTimeStartChange();
+      }
+
     return (
         <Dropdown>
             <Dropdown.Toggle>
@@ -168,13 +173,13 @@ const TimeSelector = () => {
                         <label className="flex-grow-1 fw-bold">From</label>
                         <label className="">{fromText}</label>
                     </Stack>
-                    <Form.Range min={0} max={24*2} step={1} value={fromValue} onChange={e => adjustRange({type: 'from', x: e.target.value})}/>
+                    <Form.Range min={0} max={24*2} step={1} value={fromValue} /*onInput={handleTimeEndChange()}*/ onChange={e => adjustRange({type: 'from', x: e.target.value})}/>
                     {/* <Dropdown.Divider/> */}
                     <Stack direction="horizontal">
                         <label className="flex-grow-1 fw-bold">To</label>
                         <label className="">{toText}</label>
                     </Stack>
-                    <Form.Range min={0} max={24*2} step={1} value={toValue} onChange={e => adjustRange({type: 'to', x: e.target.value})}/>
+                    <Form.Range min={0} max={24*2} step={1} value={toValue} /*onInput={handleTimeStartChange()}*/ onChange={e => adjustRange({type: 'to', x: e.target.value})}/>
                 </Form>
             </Dropdown.Menu>
        </Dropdown>
@@ -358,16 +363,20 @@ const App = () => {
             buses: [],
         })
 
-        const [valueFM, setValueFM]=useState(['Jan'])
-        const [valueFY, setValueFY]=useState([2018])
-        const [valueTM, setValueTM]=useState(['Dec'])
-        const [valueTY, setValueTY]=useState([2020])
-        const[valueStartDay, setValueStartDay]=useState([1])
-        const[valueEndDay, setValueEndDay]=useState([30])
+        const [valueFM, setValueFM]=useState('Jan')
+        const [valueFY, setValueFY]=useState(2018)
+        const [valueTM, setValueTM]=useState('Dec')
+        const [valueTY, setValueTY]=useState(2020)
+        const[valueStartDay, setValueStartDay]=useState(1)
+        const[valueEndDay, setValueEndDay]=useState(31)
+        //const[valueStartTime, setValueStartTime]=useState(1)
+       // const[fromText, setValueEndTime]=useState(1)
 
-
-        
-    
+        const months = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May":5 , "June": 6, "July": 7, "Aug": 8, "Sept": 9, "Oct": 10, "Nov": 11, "Dec": 12}
+        var startDate = new Date(valueFY, months[valueFM] -1 , valueStartDay).toISOString().substr(0, 10);;
+        var endDate = new Date(valueTY, months[valueTM] -1 , valueEndDay).toISOString().substr(0, 10);;
+        //var startdate = valueFY + "-" + "0" + (d.getMonth()).slice(-2) + "-" + ("0" + d.getDate()).slice(-2)
+        //var enddate = valueTY + "-" + ("0" + (d.getMonth())).slice(-2) + "-" + ("0" + d.getDate()).slice(-2)
     
         const fetchBusData = async () => {
             fetch("https://transit-ninerlytics.com/api/buses").then(response => response.json())
@@ -394,7 +403,7 @@ const App = () => {
 
     return (
         <BrowserRouter>
-            <AppContext.Provider value={{filter, setFilter, buses, routes, stops, valueFM, setValueFM, valueFY, setValueFY, valueTM, setValueTM, valueTY, setValueTY, setValueStartDay, valueStartDay, setValueEndDay, valueEndDay}}>
+            <AppContext.Provider value={{filter, setFilter, buses, routes, stops, valueFM, setValueFM, valueFY, setValueFY, valueTM, setValueTM, valueTY, setValueTY, setValueStartDay, valueStartDay, setValueEndDay, valueEndDay, startDate, endDate}}>
                 <Routes>
                     <Route path="/" element={<Layout/>}>
                         <Route index element={<Navigate to="stops" replace />} />
