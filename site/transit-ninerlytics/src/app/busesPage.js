@@ -2,7 +2,7 @@ const BusesPage = () => {
     const hardTempData = [
         { busID: '2401', milesDriven: '376', avgMiles: '1.0' },
         { busID: '2402', milesDriven: '487', avgMiles: '1.3' },
-        { budID: '2403', milesDriven: '442', avgMiles: '1.2' },
+        { busID: '2403', milesDriven: '442', avgMiles: '1.2' },
         { busID: '2404', milesDriven: '195', avgMiles: '0.5' },
         { busID: '2405', milesDriven: '239', avgMiles: '0.7' },
         { busID: '2406', milesDriven: '459', avgMiles: '1.3' },
@@ -19,7 +19,7 @@ const BusesPage = () => {
 
     return (
 
-        <table class='table'>
+        <table class='table table-striped'>
         <caption align="top">Bus Info Data</caption>
         <thead>
             <tr>
