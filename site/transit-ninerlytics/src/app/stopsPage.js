@@ -23,19 +23,17 @@ L.Icon.Default.mergeOptions({
 
 
 
-
-
 const StopsPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const navigate = useNavigate()
     const {filter, setFilter, buses, routes, stops, valueFM, setValueFM, valueFY, setValueFY, valueTM, setValueTM, valueTY, setValueTY, valueStartDay, setValueStartDay, valueEndDay, setvalueEndDay, startDate, endDate,  valueStartTime, setValueStartTime, valueEndTime, setValueEndTime} = useContext(AppContext)
     
-    const[stopinfo, setStopInfo] = useState([]);
+    const[stopinfo, setStopInfo] = useState(null);
     
     const requestOptions = {
         mode: 'no-cors',
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',  },
         body: JSON.stringify({ 
             'min_date': '2018-02-02',
             'max_date': '2019-01-01',
@@ -45,17 +43,12 @@ const StopsPage = () => {
             'route_ids': [1,2,3]
          })
     };
-    
-    const fetchStopData = async () => {
-    fetch("https://transit-ninerlytics.com/api/data/stopinfo", requestOptions).then(response => response.json())
-    .then(data => setStopInfo(data))
-        }
 
     useEffect(() => {
-        fetchStopData()
-      },[]);
+        fetch("https://transit-ninerlytics.com/api/data/stopinfo", requestOptions).then(response => response.json())
+        .then(data => setStopInfo(data.message))
 
-  console.log(stopinfo)
+      },[]);
 
     
     // datatypes to display in sidebar dropdown
@@ -132,8 +125,6 @@ const StopsPage = () => {
     const dataType = searchParams.get("data")
     const currentItem = sidebar.find(x => x.key === dataType)
 
-
-
     // navigate to a default datatype when url isn't valid
     useEffect(() => {
         if(currentItem == null) {
@@ -163,9 +154,6 @@ const StopsPage = () => {
     }
 
     let greenIcon = L.icon({iconUrl: greenicon, iconSize: [35, 35],});
-
-
-
 
     // http://alexurquhart.github.io/free-tiles/
     // https://leaflet-extras.github.io/leaflet-providers/preview/
@@ -221,15 +209,13 @@ const StopsPage = () => {
                     ))}
                     </Dropdown.Menu>
                 </Dropdown>
-                <table style={{border: '1px solid black'}}>
-                    <tr>
-                        <td>Cato Hall</td>
-                        <td>12</td>    
-                    </tr>
-                    <tr>
-                        <td>North Deck</td>
-                        <td>14</td>    
-                    </tr>
+                <table style={{ width: "300px", 'text-align': 'center', border: '3px solid green'}}>
+                    {silverStops.map(x => (
+                        <tr>
+                            <td>{x.name}</td>
+                            <td>{String(x.coordinates[0]).slice(-1)}</td>    
+                        </tr>
+                    ))}
                 </table>
 
                 
