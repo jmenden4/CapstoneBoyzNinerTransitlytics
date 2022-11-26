@@ -27,70 +27,36 @@ export const AppContext = createContext()
 
 
 
-const FilterSelector = () => {
+const BusRouteSelector = () => {
+    const {filter, modifyFilter, buses, routes} = useContext(AppContext)
 
-    const {filter, setFilter, buses, routes} = useContext(AppContext)
-    
-    const toggleRouteFilter = (key) => {
-        const newRoutes = filter.routes
-        const i = newRoutes.indexOf(key)
-        if(i === -1) {
-            newRoutes.push(key)
-        } else {
-            newRoutes.splice(i, 1)
-        }
-        setFilter({
-            ...filter,
-            routes: newRoutes,
-        })
-    }
-
-    const toggleBusFilter = (key) => {
-        const newBuses = filter.buses
-        const i = newBuses.indexOf(key)
-        if(i === -1) {
-            newBuses.push(key)
-        } else {
-            newBuses.splice(i, 1)
-        }
-        setFilter({
-            ...filter,
-            buses: newBuses,
-        })
-    }
-
-    const setAllRoutesFilter = value => setFilter({
-        ...filter,
-        routes: value ? routes : [],
-    })
-
-    const setAllBusesFilter = value => setFilter({
-        ...filter,
-        buses: value ? buses : [],
-    })
+    const toggleRoute = key => modifyFilter({type: 'ROUTE.TOGGLE', key})
+    const toggleBus = key => modifyFilter({type: 'BUS.TOGGLE', key})
+    const setAllRoutes = value => modifyFilter({type: 'ROUTE.ALL', value})
+    const setAllBuses = value => modifyFilter({type: 'BUS.ALL', value})
 
     return (
         <Dropdown>
             <Dropdown.Toggle>
-                Filter
+                Buses
             </Dropdown.Toggle>
             <Dropdown.Menu>
                 <Form className="px-2">
                     <Stack direction="horizontal" className="mb-2">
                         <label className="flex-grow-1">Routes</label>
-                        <Button variant="link" size="sm" onClick={e => setAllRoutesFilter(true)}>All</Button>
-                        <Button variant="link" size="sm" onClick={e => setAllRoutesFilter(false)}>None</Button>
+                        <Button variant="link" size="sm" onClick={e => setAllRoutes(true)}>All</Button>
+                        <Button variant="link" size="sm" onClick={e => setAllRoutes(false)}>None</Button>
                     </Stack>
                     {routes.map(x => (
-                        <Form.Check key={x.id} label={x.name} checked={filter.routes.includes(x)} onChange={e => toggleRouteFilter(x)}/>
+                        <Form.Check key={x.id} label={x.name} checked={filter.routes.includes(x.id)} onChange={e => toggleRoute(x.id)}/>
                     ))}
                     <Stack direction="horizontal" className="my-2">
                         <label className="flex-grow-1">Buses</label>
-                        <Button variant="link" size="sm" onClick={e => setAllBusesFilter(true)}>All</Button>
-                        <Button variant="link" size="sm" onClick={e => setAllBusesFilter(false)}>None</Button>
+                        <Button variant="link" size="sm" onClick={e => setAllBuses(true)}>All</Button>
+                        <Button variant="link" size="sm" onClick={e => setAllBuses(false)}>None</Button>
                     </Stack>
                     {buses.map(x => (
-                        <Form.Check key={x.id} label={x.code} checked={filter.buses.includes(x)} onChange={e => toggleBusFilter(x)}/>
+                        <Form.Check key={x.id} label={x.code} checked={filter.buses.includes(x.id)} onChange={e => toggleBus(x.id)}/>
                     ))}
                 </Form>
             </Dropdown.Menu>
@@ -148,13 +114,6 @@ const TimeSelector = () => {
         setValueEndTime(e)
     }
 
-    // let dropdownText = null
-    // if(fromValue == 0 && toValue == 48) {
-    //     dropdownText = 'All Day'
-    // } else {
-    //     dropdownText = `${fromText} - ${toText}`
-    // }
-
     const twoCalls = e => {
         adjustRange({type: 'from', x: e.target.value});
         handleTimeStartChange();
@@ -186,37 +145,79 @@ const TimeSelector = () => {
     );
 }
 
+
+
 const DateSelector = () => {
-    const {valueFM, setValueFM, valueFY, setValueFY, valueTM, setValueTM, valueTY, setValueTY, valueStartDay, setValueStartDay, valueEndDay, setValueEndDay} = useContext(AppContext)
-    const years = [2018, 2019, 2020]
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]
+    const {filter, modifyFilter} = useContext(AppContext)
+    const {minDate, maxDate} = filter
 
-    const handleSelectFM=(e)=>{
-        console.log(e)
-        setValueFM(e)
-    }
-    
-    const handleSelectFY=(e)=>{
-        console.log(e)
-        setValueFY(e)
+
+    const DateDropdowns = (props) => {
+        const {date, setDate} = props
+
+        const years = [2018, 2019, 2020]
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
+        
+        const day = date.getDate()
+        const month = date.getMonth()
+        const year = date.getFullYear()
+        
+        const lastOfMonth = new Date(year, month + 1, 0)
+        const daysInMonth = lastOfMonth.getDate()
+        
+        const setDateCorrectedDay = (year, month) => {
+            const minDay = new Date(year, month).getDate()
+            const maxDay = new Date(year, month + 1, 0).getDate()
+            const newDay = Math.min(Math.max(day, minDay), maxDay)
+            setDate(new Date(year, month, newDay))
+        }
+        
+        const onSelectDay = day => {
+            date.setDate(day)
+            setDate(date)
+        }
+
+        const onSelectMonth = i => setDateCorrectedDay(year, parseInt(i))
+        const onSelectYear = i => setDateCorrectedDay(parseInt(i), month)
+
+        return (
+            <>
+                <Dropdown onSelect={onSelectDay}>        
+                    <Dropdown.Toggle variant="outline-secondary" size="sm">
+                        {day}
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu className="limit-height-dropdown">
+                        {Array(daysInMonth).fill().map((_, i) => (
+                            <Dropdown.Item eventKey={i+1} key={i}>{i + 1}</Dropdown.Item>)
+                        )}
+                    </Dropdown.Menu>
+                </Dropdown>
+                <Dropdown onSelect={onSelectMonth}>        
+                    <Dropdown.Toggle variant="outline-secondary" size="sm">
+                        {monthNames[month]}
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu className="limit-height-dropdown">
+                        {monthNames.map((name, i) => (
+                            <Dropdown.Item eventKey={i} key={i}>{name}</Dropdown.Item>)
+                        )}
+                    </Dropdown.Menu>
+                </Dropdown>
+                <Dropdown onSelect={onSelectYear}>
+                    <Dropdown.Toggle variant="outline-secondary" size="sm">
+                        {year}
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu className="limit-height-dropdown">
+                        {years.map(year => (
+                            <Dropdown.Item eventKey={year} key={year}>{year}</Dropdown.Item>)
+                        )}
+                    </Dropdown.Menu>
+                </Dropdown>    
+            </>
+        )
     }
 
- 
-    const handleSelectTM=(e)=>{
-        setValueTM(e)
-    }
-
-    const handleSelectTY=(e)=>{
-        setValueTY(e)
-    }
-
-    const handleSelectStartDay=(e)=>{
-        setValueStartDay(e)
-    }
-
-    const handleSelectEndDay=(e)=>{
-        setValueEndDay(e)
-    }
+    const setMinDate = date => modifyFilter({type: 'EDIT', values: {minDate: date}})
+    const setMaxDate = date => modifyFilter({type: 'EDIT', values: {maxDate: date}})
 
     return (
         <Dropdown autoClose = "outside">
@@ -227,73 +228,22 @@ const DateSelector = () => {
                 <Form className="px-2 py-2">
                     <Stack direction="horizontal" className="mb-3" gap={2}>
                         <div className="flex-grow-1 fw-bold">From</div> 
-                        <Dropdown onSelect={handleSelectStartDay}>        
-                            <Dropdown.Toggle variant="outline-secondary" size="sm">
-                                {valueStartDay}
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu className="limit-height-dropdown">
-                                {Array(31).fill().map((_, index) => (
-                                    <Dropdown.Item eventKey={index+1} key={index+1}>{index + 1}</Dropdown.Item>)
-                                )}
-                            </Dropdown.Menu>
-                        </Dropdown>
-                        <Dropdown onSelect={handleSelectFM}>        
-                            <Dropdown.Toggle variant="outline-secondary" size="sm">
-                                {valueFM}
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu className="limit-height-dropdown">
-                                {months.map((month, index) => (
-                                    <Dropdown.Item eventKey={month} key={index}>{month}</Dropdown.Item>)
-                                )}
-                            </Dropdown.Menu>
-                        </Dropdown>
-                        <Dropdown onSelect={handleSelectFY}>
-                            <Dropdown.Toggle variant="outline-secondary" size="sm">
-                                {valueFY}
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu className="limit-height-dropdown">
-                                {years.map((year, index) => (
-                                    <Dropdown.Item eventKey={year} key={index}>{year}</Dropdown.Item>)
-                                )}
-                            </Dropdown.Menu>
-                        </Dropdown>    
+                        <DateDropdowns date={minDate} setDate={setMinDate}/>
                     </Stack>
                     <Stack direction="horizontal" gap={2}>
                         <div className="flex-grow-1 fw-bold">To</div>
-                        <Dropdown onSelect={handleSelectEndDay}>        
-                            <Dropdown.Toggle variant="outline-secondary" size="sm">
-                                {valueEndDay}
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu className="limit-height-dropdown">
-                                {Array(31).fill().map((_, index) => (
-                                    <Dropdown.Item eventKey={index+1} key={index+1}>{index + 1}</Dropdown.Item>)
-                                )}
-                            </Dropdown.Menu>
-                        </Dropdown>
-                        <Dropdown onSelect={handleSelectTM}>        
-                            <Dropdown.Toggle variant="outline-secondary" size="sm">
-                                {valueTM}
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu className="limit-height-dropdown">
-                                {months.map((month, index) => (
-                                    <Dropdown.Item eventKey={month} key={index}>{month}</Dropdown.Item>)
-                                )}
-                            </Dropdown.Menu>
-                        </Dropdown>
-                        <Dropdown onSelect={handleSelectTY}>
-                            <Dropdown.Toggle variant="outline-secondary" size="sm">
-                                {valueTY}
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu className="limit-height-dropdown">
-                                {years.map((year, index) => (
-                                    <Dropdown.Item eventKey={year} key={index}>{year}</Dropdown.Item>)
-                                )}
-                            </Dropdown.Menu>
-                        </Dropdown>
+                        <DateDropdowns date={maxDate} setDate={setMaxDate}/>
                     </Stack>
                 </Form>
             </Dropdown.Menu>
         </Dropdown>
+    )
+}
+
+
+const FetchDataButton = () => {
+    return (
+        <Button variant="primary">Fetch Data</Button>
     )
 }
 
@@ -325,9 +275,10 @@ const NavigationBar = () => {
             </Col>
             <Col>
                 <Stack direction="horizontal" gap={2} className="justify-content-center">
-                    <FilterSelector/>
+                    <BusRouteSelector/>
                     <TimeSelector/>
                     <DateSelector/>
+                    <FetchDataButton/>
                 </Stack>
             </Col>
             <Col className="align-self-center d-flex justify-content-end">
@@ -354,56 +305,175 @@ const Layout = () => {
 
 const App = () => {
 
-        const[buses, setBus] = useState([]);
-        const[routes, setRoutes] = useState([]);
-        const[stops, setStops] = useState([]);
-    
-        const [filter, setFilter] = useState({
-            routes: [],
-            buses: [],
-        })
+    const[_buses, setBus] = useState(null);
+    const[_routes, setRoutes] = useState(null);
+    const[_stops, setStops] = useState(null);
 
-        const [valueFM, setValueFM]=useState('Jan')
-        const [valueFY, setValueFY]=useState(2018)
-        const [valueTM, setValueTM]=useState('Dec')
-        const [valueTY, setValueTY]=useState(2020)
-        const[valueStartDay, setValueStartDay]=useState(1)
-        const[valueEndDay, setValueEndDay]=useState(31)
-        //const[valueStartTime, setValueStartTime]=useState(1)
-       // const[fromText, setValueEndTime]=useState(1)
+    const buses = _buses || []
+    const routes = _routes || []
+    const stops = _stops || []
 
-        const months = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May":5 , "June": 6, "July": 7, "Aug": 8, "Sept": 9, "Oct": 10, "Nov": 11, "Dec": 12}
-        var startDate = new Date(valueFY, months[valueFM] -1 , valueStartDay).toISOString().substr(0, 10);;
-        var endDate = new Date(valueTY, months[valueTM] -1 , valueEndDay).toISOString().substr(0, 10);;
-        //var startdate = valueFY + "-" + "0" + (d.getMonth()).slice(-2) + "-" + ("0" + d.getDate()).slice(-2)
-        //var enddate = valueTY + "-" + ("0" + (d.getMonth())).slice(-2) + "-" + ("0" + d.getDate()).slice(-2)
-    
-        const fetchBusData = async () => {
-            fetch("https://transit-ninerlytics.com/api/buses").then(response => response.json())
-            .then(data => setBus(data));
+
+    const [filter, modifyFilter] = useReducer((state, action) => {
+        console.info(action)
+        switch(action.type) {
+            case 'REPLACE': {
+                return action.values
             }
-    
-        const fetchRoutesData = async () => {
-            fetch("https://transit-ninerlytics.com/api/routes").then(response => response.json())
-            .then(data => setRoutes(data));
+            case 'EDIT': {
+                return {
+                    ...state,
+                    ...action.values,
                 }
-    
-        const fetchStopsData = async () => {
-            fetch("https://transit-ninerlytics.com/api/stops").then(response => response.json())
-            .then(data => setStops(data));
-                    }
-    
-        useEffect(() => {
-           
-            fetchBusData()
-            fetchStopsData()
-            fetchRoutesData()
-    
-        },[]);
+            }
+            case 'ROUTE.TOGGLE': {
+                const {key} = action
+                const newRoutes = state.routes
+                const i = newRoutes.indexOf(key)
+                if(i === -1) {
+                    newRoutes.push(key)
+                } else {
+                    newRoutes.splice(i, 1)
+                }
+                return {
+                    ...state,
+                    routes: newRoutes,
+                }
+            }
+            case 'BUS.TOGGLE': {
+                const {key} = action
+                const newBuses = state.buses
+                const i = newBuses.indexOf(key)
+                if(i === -1) {
+                    newBuses.push(key)
+                } else {
+                    newBuses.splice(i, 1)
+                }
+                return {
+                    ...state,
+                    buses: newBuses,
+                }
+            }
+            case 'ROUTE.ALL': {
+                return {
+                    ...state,
+                    routes: (action.value && routes) ? routes.map(x => x.id) : [],
+                }
+            }
+            case 'BUS.ALL': {
+                return {
+                    ...state,
+                    buses: (action.value && buses) ? buses.map(x => x.id) : [],
+                }
+            }
+            default: return state
+        }
+    }, {
+        minDate: new Date(2018, 0, 1),
+        maxDate: new Date(2018, 11, 31),
+        minTime: 0,
+        maxTime: 24*2,
+        routes: [],
+        buses: [],
+    })
+
+
+    const [stopData, setStopData] = useState(null)
+
+
+    const fetchBuses = async () => {
+        if(_buses != null)
+            return
+        fetch("/api/buses")
+        .then(response => response.json())
+        .then(data => setBus(data));
+    }
+
+    const fetchRoutes = async () => {
+        if(_routes != null)
+            return
+        fetch("/api/routes")
+        .then(response => response.json())
+        .then(data => setRoutes(data));
+    }
+
+    const fetchStops = async () => {
+        if(_stops != null)
+            return
+        fetch("/api/stops")
+        .then(response => response.json())
+        .then(data => setStops(data));
+    }
+
+    const fetchStopData = async () => {   
+        const {minDate, maxDate, minTime, maxTime, buses, routes} = filter 
+
+        const dateToISO = date => date.toLocaleDateString('en-CA')
+
+        const timeToHHMMSS = time => {
+            let hours = Math.floor(time / 2)
+            let minutes = (time % 2) * 30
+            let seconds = 0
+            if(time == 48) {
+                hours = 23
+                minutes = 59
+                seconds = 59
+            }
+            hours = hours.toString().padStart(2, '0')
+            minutes = minutes.toString().padStart(2, '0')
+            seconds = seconds.toString().padStart(2, '0')
+            return `${hours}:${minutes}:${seconds}`
+        }
+
+        const body = { 
+            min_date: dateToISO(minDate),
+            max_date: dateToISO(maxDate),
+            min_time: timeToHHMMSS(minTime),
+            max_time: timeToHHMMSS(maxTime),
+            bus_ids: buses,
+            route_ids: routes,
+        }
+        // console.info(body)
+        try {
+            const response = await fetch("/api/data/stopinfo", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body),
+            })
+            const data = await response.json()
+            // console.info(data)
+            setStopData(data)
+        } catch(err) {
+            console.info(err)
+        }
+
+    }
+
+
+    useEffect(() => {
+        fetchBuses()
+        fetchRoutes()
+        fetchStops()
+    }, []);
+
+    useEffect(() => {
+        fetchStopData()
+    }, [filter])
+
+    const contextValue = {
+        filter,
+        modifyFilter,
+        buses,
+        stops,
+        routes,
+        stopData,
+    }
 
     return (
         <BrowserRouter>
-            <AppContext.Provider value={{filter, setFilter, buses, routes, stops, valueFM, setValueFM, valueFY, setValueFY, valueTM, setValueTM, valueTY, setValueTY, setValueStartDay, valueStartDay, setValueEndDay, valueEndDay, startDate, endDate}}>
+            <AppContext.Provider value={contextValue}>
                 <Routes>
                     <Route path="/" element={<Layout/>}>
                         <Route index element={<Navigate to="stops" replace />} />
