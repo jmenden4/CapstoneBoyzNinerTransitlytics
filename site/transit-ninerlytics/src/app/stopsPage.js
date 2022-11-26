@@ -23,24 +23,19 @@ L.Icon.Default.mergeOptions({
 
 
 
-// const colorGradient = new Gradient(['ff0000', 'ffff00', '00ff00'])
-// console.info(colorGradient.rgbs)
-
 const formatAsTime = minutes => {
     const x = Math.round(minutes)
     const h = Math.floor(x / 60)
     const m = x % 60
-    // return `${h}:${m.toString().padStart(2, '0')}`
     let value = ''
     if(h != 0)
         value += `${h}h`
-    if(m != 0) {
+    if(m != 0 || h == 0) {
         if(h != 0)
             value += ' '
         value += `${m}m`
     }
     return value
-    // return `${h}hr ${m.toString().padStart(2, '0')}mins`
 }
 
 
@@ -109,8 +104,22 @@ const sidebar = [
         textLight: x => x >= 0.75 / 1.5,
     },
     {
-        name: "Min / Max Wait Time",
-        key: "min_max_wait",
+        name: "Min Wait Time",
+        key: "min_wait",
+        dataFunc: x => {
+            const value = x.min_wait_time / 60
+            return {
+                value,
+                text: formatAsTime(value),
+            }
+        },
+        relativeValue: x => Math.min(x / (60 * 1.5), 1),
+        gradient: goodBadGradient,
+        textLight: x => x >= 0.75 / 1.5,
+    },
+    {
+        name: "Max Wait Time",
+        key: "max_wait",
         dataFunc: x => {
             const value = x.max_wait_time / 60
             return {
@@ -134,8 +143,6 @@ const StopsPage = () => {
         key: 'value',
         ascending: false,
     })
-
-    // console.info(stopData)
 
 
 
@@ -395,7 +402,7 @@ const StopsPage = () => {
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <THSortable name="Name" sortKey="name" defaultAscending={true}/>
+                                <THSortable name="Bus Stop" sortKey="name" defaultAscending={true}/>
                                 <THSortable name="Value" sortKey="value" defaultAscending={false}/>
                             </tr>
                         </thead>
