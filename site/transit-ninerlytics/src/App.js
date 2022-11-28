@@ -65,28 +65,8 @@ const BusRouteSelector = () => {
 }
 
 const TimeSelector = () => {
-    const {valueStartTime, setValueStartTime, valueEndTime, setValueEndTime} = useContext(AppContext)
-    const [range, adjustRange] = useReducer((currentRange, action) => {
-        const [fromValue, toValue] = currentRange
-        const {type, x} = action
-        switch(type) {
-            case 'from': {
-                return [
-                    x,
-                    Math.max(x, toValue),
-                ]
-            }
-            case 'to': {
-                return [
-                    Math.min(x, fromValue),
-                    x,
-                ]
-            }
-        }
-    }, [0, 24])
-
-    // extract ends from range
-    const [fromValue, toValue] = range
+    const {filter, modifyFilter} = useContext(AppContext)
+    const {minTime, maxTime} = filter
 
     // function to make 12hour AM/PM text from slider value
     const xToTimeText = x => {
@@ -103,21 +83,21 @@ const TimeSelector = () => {
         return `${hour12}:${String(part * 30).padStart(2, "0")}${isAM ? "am" : "pm"}`
     }
 
-    const fromText = xToTimeText(fromValue)
-    const toText = xToTimeText(toValue)
+    const fromText = xToTimeText(minTime)
+    const toText = xToTimeText(maxTime)
 
-    const handleTimeStartChange=(e)=>{
-        setValueStartTime(e)
+    const onMinTimeChange = e => {
+        const value = parseInt(e.target.value)
+        if(value == minTime)
+            return
+        modifyFilter({type: 'TIME.MIN', value})
     }
-
-    const handleTimeEndChange=(e)=>{
-        setValueEndTime(e)
+    const onMaxTimeChange = e => {
+        const value = parseInt(e.target.value)
+        if(value == maxTime)
+            return
+        modifyFilter({type: 'TIME.MAX', value})
     }
-
-    const twoCalls = e => {
-        adjustRange({type: 'from', x: e.target.value});
-        handleTimeStartChange();
-      }
 
     return (
         <Dropdown>
@@ -132,13 +112,13 @@ const TimeSelector = () => {
                         <label className="flex-grow-1 fw-bold">From</label>
                         <label className="">{fromText}</label>
                     </Stack>
-                    <Form.Range min={0} max={24*2} step={1} value={fromValue} /*onInput={handleTimeEndChange()}*/ onChange={e => adjustRange({type: 'from', x: e.target.value})}/>
+                    <Form.Range min={0} max={24*2} step={1} value={minTime} onChange={onMinTimeChange}/>
                     {/* <Dropdown.Divider/> */}
                     <Stack direction="horizontal">
                         <label className="flex-grow-1 fw-bold">To</label>
                         <label className="">{toText}</label>
                     </Stack>
-                    <Form.Range min={0} max={24*2} step={1} value={toValue} /*onInput={handleTimeStartChange()}*/ onChange={e => adjustRange({type: 'to', x: e.target.value})}/>
+                    <Form.Range min={0} max={24*2} step={1} value={maxTime} onChange={onMaxTimeChange}/>
                 </Form>
             </Dropdown.Menu>
        </Dropdown>
@@ -242,9 +222,27 @@ const DateSelector = () => {
 
 
 const FetchDataButton = () => {
-    return (
-        <Button variant="primary">Fetch Data</Button>
-    )
+    const {fetchStopData} = useContext(AppContext)
+    const [loading, setLoading] = useState(false)
+
+    const onClick = async e => {
+        setLoading(true)
+        const success = await fetchStopData()
+        console.info(success)
+        setLoading(false)
+    }
+
+    if(loading) {
+        return (
+            <Button variant="primary" disabled>Loading...</Button>
+        )
+    } else {
+        return (
+            <Button variant="primary" onClick={onClick}>Fetch Data</Button>
+        )
+    }
+
+    
 }
 
 
@@ -260,7 +258,7 @@ const NavigationBar = () => {
                         TRANSIT NINERLYTICS&#8482;
                     </div>
                 </div>
-                <Nav variant="pills" className="">
+                <Nav variant="pills">
                     <Nav.Item>
                         <LinkContainer to="/stops">
                             <Nav.Link>Stops</Nav.Link>
@@ -305,7 +303,7 @@ const Layout = () => {
 
 const App = () => {
 
-    const[_buses, setBus] = useState(null);
+    const[_buses, setBuses] = useState(null);
     const[_routes, setRoutes] = useState(null);
     const[_stops, setStops] = useState(null);
 
@@ -366,6 +364,22 @@ const App = () => {
                     buses: (action.value && buses) ? buses.map(x => x.id) : [],
                 }
             }
+            case 'TIME.MIN': {
+                const {value} = action
+                return {
+                    ...state,
+                    minTime: value,
+                    maxTime: Math.max(value, state.maxTime),
+                }
+            }
+            case 'TIME.MAX': {
+                const {value} = action
+                return {
+                    ...state,
+                    minTime: Math.min(value, state.minTime),
+                    maxTime: value,
+                }
+            }
             default: return state
         }
     }, {
@@ -384,25 +398,33 @@ const App = () => {
     const fetchBuses = async () => {
         if(_buses != null)
             return
-        fetch("/api/buses")
-        .then(response => response.json())
-        .then(data => setBus(data));
+        try {
+            const response = await fetch("/api/buses")
+            const data = await response.json()
+            setBuses(data)
+            modifyFilter({type: 'BUS.ALL', value: true})
+        } catch(err) {}
     }
 
     const fetchRoutes = async () => {
         if(_routes != null)
             return
-        fetch("/api/routes")
-        .then(response => response.json())
-        .then(data => setRoutes(data));
+        try {
+            const response = await fetch("/api/routes")
+            const data = await response.json()
+            setRoutes(data)
+            modifyFilter({type: 'ROUTE.ALL', value: true})
+        } catch(err) {}
     }
 
     const fetchStops = async () => {
         if(_stops != null)
             return
-        fetch("/api/stops")
-        .then(response => response.json())
-        .then(data => setStops(data));
+        try {
+            const response = await fetch("/api/stops")
+            const data = await response.json()
+            setStops(data)
+        } catch(err) {}
     }
 
     const fetchStopData = async () => {   
@@ -433,7 +455,7 @@ const App = () => {
             bus_ids: buses,
             route_ids: routes,
         }
-        // console.info(body)
+
         try {
             const response = await fetch("/api/data/stopinfo", {
                 method: 'POST',
@@ -443,24 +465,24 @@ const App = () => {
                 body: JSON.stringify(body),
             })
             const data = await response.json()
-            // console.info(data)
             setStopData(data)
+            return true
         } catch(err) {
             console.info(err)
+            return false
         }
 
     }
-
-
+    
     useEffect(() => {
         fetchBuses()
         fetchRoutes()
         fetchStops()
     }, []);
 
-    useEffect(() => {
-        fetchStopData()
-    }, [filter])
+    // useEffect(() => {
+    //     fetchStopData()
+    // }, [filter])
 
     const contextValue = {
         filter,
@@ -469,6 +491,7 @@ const App = () => {
         stops,
         routes,
         stopData,
+        fetchStopData,
     }
 
     return (
