@@ -222,13 +222,17 @@ const DateSelector = () => {
 
 
 const FetchDataButton = () => {
-    const {fetchStopData} = useContext(AppContext)
+    const {fetchStopData, fetchBusData} = useContext(AppContext)
     const [loading, setLoading] = useState(false)
 
     const onClick = async e => {
         setLoading(true)
-        const success = await fetchStopData()
-        console.info(success)
+        const res = await Promise.all([
+            fetchStopData(),
+            fetchBusData(),
+        ])
+        console.info(res)
+        // console.info(success)
         setLoading(false)
     }
 
@@ -393,6 +397,7 @@ const App = () => {
 
 
     const [stopData, setStopData] = useState(null)
+    const [busData, setBusData] = useState(null)
 
 
     const fetchBuses = async () => {
@@ -427,25 +432,25 @@ const App = () => {
         } catch(err) {}
     }
 
+    const dateToISO = date => date.toLocaleDateString('en-CA')
+
+    const timeToHHMMSS = time => {
+        let hours = Math.floor(time / 2)
+        let minutes = (time % 2) * 30
+        let seconds = 0
+        if(time == 48) {
+            hours = 23
+            minutes = 59
+            seconds = 59
+        }
+        hours = hours.toString().padStart(2, '0')
+        minutes = minutes.toString().padStart(2, '0')
+        seconds = seconds.toString().padStart(2, '0')
+        return `${hours}:${minutes}:${seconds}`
+    }
+
     const fetchStopData = async () => {   
         const {minDate, maxDate, minTime, maxTime, buses, routes} = filter 
-
-        const dateToISO = date => date.toLocaleDateString('en-CA')
-
-        const timeToHHMMSS = time => {
-            let hours = Math.floor(time / 2)
-            let minutes = (time % 2) * 30
-            let seconds = 0
-            if(time == 48) {
-                hours = 23
-                minutes = 59
-                seconds = 59
-            }
-            hours = hours.toString().padStart(2, '0')
-            minutes = minutes.toString().padStart(2, '0')
-            seconds = seconds.toString().padStart(2, '0')
-            return `${hours}:${minutes}:${seconds}`
-        }
 
         const body = { 
             min_date: dateToISO(minDate),
@@ -466,6 +471,7 @@ const App = () => {
             })
             const data = await response.json()
             setStopData(data)
+            console.info(busData)
             return true
         } catch(err) {
             console.info(err)
@@ -474,6 +480,36 @@ const App = () => {
 
     }
     
+    const fetchBusData = async () => {   
+        const {minDate, maxDate, minTime, maxTime, buses, routes} = filter 
+
+        const body = { 
+            min_date: dateToISO(minDate),
+            max_date: dateToISO(maxDate),
+            min_time: timeToHHMMSS(minTime),
+            max_time: timeToHHMMSS(maxTime),
+            bus_ids: buses,
+            route_ids: routes,
+        }
+
+        try {
+            const response = await fetch("/api/data/businfo", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body),
+            })
+            const data = await response.json()
+            setBusData(data)
+            return true
+        } catch(err) {
+            console.info(err)
+            return false
+        }
+
+    }
+
     useEffect(() => {
         fetchBuses()
         fetchRoutes()
@@ -491,7 +527,9 @@ const App = () => {
         stops,
         routes,
         stopData,
+        busData,
         fetchStopData,
+        fetchBusData,
     }
 
     return (

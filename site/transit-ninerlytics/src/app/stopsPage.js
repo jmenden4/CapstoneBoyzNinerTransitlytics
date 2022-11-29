@@ -355,7 +355,7 @@ const StopsPage = () => {
                 <div className="flex-grow-1 border-top" style={{
                     overflowY: 'scroll',
                 }}>
-                    <Table className="table-fixed-head">
+                    <Table className="table-fixed-head table-hover">
                         <thead>
                             <tr>
                                 <th>#</th>
