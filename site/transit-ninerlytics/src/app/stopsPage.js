@@ -10,7 +10,7 @@ import L from 'leaflet'
 import {useSearchParams, useNavigate, createSearchParams} from 'react-router-dom'
 import {AppContext} from '../App.js'
 import Gradient from '../gradient'
-
+import THSortable from './tables.js'
 
 // This code allows the map icons to be displayed properly
 delete L.Icon.Default.prototype._getIconUrl
@@ -134,7 +134,6 @@ const sidebar = [
 
 
 const StopsPage = () => {
-    const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
     const {stopData, stops} = useContext(AppContext)
     
@@ -250,36 +249,6 @@ const StopsPage = () => {
     })
 
 
-    const THSortable = ({name, sortKey, defaultAscending}) => {
-        let sortIcon = null
-
-        const isSorting = sortState.key == sortKey
-        if(isSorting) {
-            sortIcon = (
-                <span className="material-symbols-sharp" style={{
-                    position: 'absolute',
-                }}>{sortState.ascending ? 'arrow_drop_down' : 'arrow_drop_up'}</span>
-            )
-        }
-
-        const onClick = e => {
-            setSortState({
-                key: sortKey,
-                ascending: isSorting ? !sortState.ascending : defaultAscending,
-            })
-        }
-
-        return (
-            <th onClick={onClick} style={{
-                cursor: 'pointer',
-            }}>
-                {name}
-                {sortIcon}
-            </th>
-        )
-    }
-
-
     // http://alexurquhart.github.io/free-tiles/
     // https://leaflet-extras.github.io/leaflet-providers/preview/
     return (
@@ -359,8 +328,8 @@ const StopsPage = () => {
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <THSortable name="Bus Stop" sortKey="name" defaultAscending={true}/>
-                                <THSortable name="Value" sortKey="value" defaultAscending={false}/>
+                                <THSortable name="Bus Stop" sortKey="name" defaultAscending sortState={sortState} setSortState={setSortState}/>
+                                <THSortable name="Value" sortKey="value" defaultAscending sortState={sortState} setSortState={setSortState}/>
                             </tr>
                         </thead>
                         <tbody>

@@ -7,6 +7,7 @@ import Dropdown from 'react-bootstrap/Dropdown'
 import Stack from 'react-bootstrap/Stack'
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
+import Spinner from 'react-bootstrap/Spinner'
 
 import LOGO from './resources/logo.png'
 import UNCC_LOGO from './resources/UNC_Charlotte_Primary_Horiz_Logo.png'
@@ -222,23 +223,28 @@ const DateSelector = () => {
 
 
 const FetchDataButton = () => {
-    const {fetchStopData, fetchBusData} = useContext(AppContext)
+    const {fetchData} = useContext(AppContext)
     const [loading, setLoading] = useState(false)
 
     const onClick = async e => {
         setLoading(true)
-        const res = await Promise.all([
-            fetchStopData(),
-            fetchBusData(),
-        ])
+        // await new Promise(resolve => setTimeout(resolve, 3000))
+        const res = await fetchData()
         console.info(res)
-        // console.info(success)
         setLoading(false)
     }
 
     if(loading) {
         return (
-            <Button variant="primary" disabled>Loading...</Button>
+            <Button variant="primary" disabled>
+                <Spinner
+                    as="span"
+                    animation="border"
+                    size="sm"
+                    className="me-1"
+                />
+                Loading...
+            </Button>
         )
     } else {
         return (
@@ -395,7 +401,7 @@ const App = () => {
         buses: [],
     })
 
-
+    const [dataFilter, setDataFilter] = useState(null)
     const [stopData, setStopData] = useState(null)
     const [busData, setBusData] = useState(null)
 
@@ -520,6 +526,17 @@ const App = () => {
     //     fetchStopData()
     // }, [filter])
 
+    const fetchData = async () => {
+        // fetch stop data and bus data
+        const res = await Promise.all([
+            fetchStopData(),
+            fetchBusData(),
+        ])
+        // store filter used for this fetch
+        setDataFilter(filter)
+        return res
+    }
+
     const contextValue = {
         filter,
         modifyFilter,
@@ -528,8 +545,8 @@ const App = () => {
         routes,
         stopData,
         busData,
-        fetchStopData,
-        fetchBusData,
+        dataFilter,
+        fetchData,
     }
 
     return (
