@@ -8,6 +8,8 @@ import Stack from 'react-bootstrap/Stack'
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import Spinner from 'react-bootstrap/Spinner'
+import Toast from 'react-bootstrap/Toast'
+import ToastContainer from 'react-bootstrap/ToastContainer'
 
 import LOGO from './resources/logo.png'
 import UNCC_LOGO from './resources/UNC_Charlotte_Primary_Horiz_Logo.png'
@@ -230,7 +232,6 @@ const FetchDataButton = () => {
         setLoading(true)
         // await new Promise(resolve => setTimeout(resolve, 3000))
         const res = await fetchData()
-        console.info(res)
         setLoading(false)
     }
 
@@ -298,6 +299,41 @@ const NavigationBar = () => {
     )
 }
 
+const NOTIFICATION_PARAMS = {
+    error: {
+        bg: 'danger',
+        bodyClasses: 'text-white',
+    },
+    success: {
+        bg: 'success',
+        bodyClasses: 'text-white',
+    }
+}
+
+const NotificationsContainer = () => {
+    const {notifications, removeNotification} = useContext(AppContext)
+    return (
+        <ToastContainer position="bottom-center" className="p-3">
+            {notifications.map((x, i) => {
+                const {bg, bodyClasses} = NOTIFICATION_PARAMS[x.type]
+                return (
+                    <Toast
+                        key={i}
+                        bg={bg}
+                        onClose={() => {
+                            removeNotification(x.id)
+                        }}
+                        show={true}
+                    >
+                        {/* <Toast.Header>{x.title}</Toast.Header> */}
+                        <Toast.Body className={bodyClasses}>{x.message}</Toast.Body>
+                    </Toast>
+                )
+            })}
+        </ToastContainer>
+    )
+}
+
 
 const Layout = () => {
     return (
@@ -306,10 +342,13 @@ const Layout = () => {
             <Row className="flex-grow-1 overflow-hidden">
                 <Outlet/>
             </Row>
+            <NotificationsContainer/>
         </Container>
     )
 }
 
+
+let _notification_id_sequence = 0
 
 const App = () => {
 
@@ -323,7 +362,6 @@ const App = () => {
 
 
     const [filter, modifyFilter] = useReducer((state, action) => {
-        console.info(action)
         switch(action.type) {
             case 'REPLACE': {
                 return action.values
@@ -393,8 +431,8 @@ const App = () => {
             default: return state
         }
     }, {
-        minDate: new Date(2018, 0, 1),
-        maxDate: new Date(2018, 11, 31),
+        minDate: new Date(2019, 0, 1),
+        maxDate: new Date(2019, 2, 0),
         minTime: 0,
         maxTime: 24*2,
         routes: [],
@@ -406,36 +444,69 @@ const App = () => {
     const [busData, setBusData] = useState(null)
 
 
+    const [notifications, updateNotifications] = useReducer((state, action) => {
+        switch(action.type) {
+            case 'send': {
+                return [
+                    ...state,
+                    action.notification,
+                ]
+            }
+            case 'remove': {
+                return state.filter(x => x.id != action.id)
+            }
+        }
+    }, [])
+
+    const sendNotification = (type, title, message) => {
+        // make new notification
+        const id = _notification_id_sequence
+        _notification_id_sequence += 1
+        updateNotifications({type: 'send', notification: {id, type, title, message}})
+        // auto remove after delay
+        setTimeout(() => {
+            removeNotification(id)
+        }, 3000);
+    }
+    const removeNotification = id => updateNotifications({type: 'remove', id})
+
+    const apiFetch = async (url, options) => {
+        const response = await fetch(url, options)
+        if(response.status !== 200) {
+            sendNotification('error', 'Error', `Error ${response.status} while fetching data from server!`)
+            return null
+        }
+        const data = await response.json()
+        return data
+    }
+
     const fetchBuses = async () => {
         if(_buses != null)
             return
-        try {
-            const response = await fetch("/api/buses")
-            const data = await response.json()
+        const data = await apiFetch("/api/buses")
+        if(data != null) {
             setBuses(data)
             modifyFilter({type: 'BUS.ALL', value: true})
-        } catch(err) {}
+        }
     }
 
     const fetchRoutes = async () => {
         if(_routes != null)
             return
-        try {
-            const response = await fetch("/api/routes")
-            const data = await response.json()
+        const data = await apiFetch("/api/routes")
+        if(data != null) {
             setRoutes(data)
             modifyFilter({type: 'ROUTE.ALL', value: true})
-        } catch(err) {}
+        }
     }
 
     const fetchStops = async () => {
         if(_stops != null)
             return
-        try {
-            const response = await fetch("/api/stops")
-            const data = await response.json()
+        const data = await apiFetch("/api/stops")
+        if(data != null) {
             setStops(data)
-        } catch(err) {}
+        }
     }
 
     const dateToISO = date => date.toLocaleDateString('en-CA')
@@ -455,9 +526,9 @@ const App = () => {
         return `${hours}:${minutes}:${seconds}`
     }
 
-    const fetchStopData = async () => {   
-        const {minDate, maxDate, minTime, maxTime, buses, routes} = filter 
 
+    const dataRequestBody = () => {
+        const {minDate, maxDate, minTime, maxTime, buses, routes} = filter 
         const body = { 
             min_date: dateToISO(minDate),
             max_date: dateToISO(maxDate),
@@ -466,54 +537,35 @@ const App = () => {
             bus_ids: buses,
             route_ids: routes,
         }
+        return body
+    }
 
-        try {
-            const response = await fetch("/api/data/stopinfo", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(body),
-            })
-            const data = await response.json()
+    const fetchStopData = async () => {   
+        const data = await apiFetch("/api/data/stopinfo", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dataRequestBody()),
+        })
+        if(data != null) {
             setStopData(data)
-            console.info(busData)
-            return true
-        } catch(err) {
-            console.info(err)
-            return false
         }
-
+        return data != null
     }
     
-    const fetchBusData = async () => {   
-        const {minDate, maxDate, minTime, maxTime, buses, routes} = filter 
-
-        const body = { 
-            min_date: dateToISO(minDate),
-            max_date: dateToISO(maxDate),
-            min_time: timeToHHMMSS(minTime),
-            max_time: timeToHHMMSS(maxTime),
-            bus_ids: buses,
-            route_ids: routes,
-        }
-
-        try {
-            const response = await fetch("/api/data/businfo", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(body),
-            })
-            const data = await response.json()
+    const fetchBusData = async () => {    
+        const data = await apiFetch("/api/data/businfo", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dataRequestBody()),
+        })
+        if(data != null) {
             setBusData(data)
-            return true
-        } catch(err) {
-            console.info(err)
-            return false
         }
-
+        return data != null
     }
 
     useEffect(() => {
@@ -522,16 +574,22 @@ const App = () => {
         fetchStops()
     }, []);
 
-    // useEffect(() => {
-    //     fetchStopData()
-    // }, [filter])
-
     const fetchData = async () => {
+        const t0 = Date.now()
         // fetch stop data and bus data
         const res = await Promise.all([
             fetchStopData(),
             fetchBusData(),
         ])
+        const t1 = Date.now()
+        const elapsed = t1 - t0
+        // show notification
+        if(!res.every(x => x)) {
+            sendNotification('error', 'Error', 'Could not fetch data!')
+        } else {
+            const timeStr = (elapsed / 1000).toFixed(1)
+            sendNotification('success', 'Yay', `Data loaded successfully in ${timeStr}s!`)
+        }
         // store filter used for this fetch
         setDataFilter(filter)
         return res
@@ -547,6 +605,9 @@ const App = () => {
         busData,
         dataFilter,
         fetchData,
+        notifications,
+        sendNotification,
+        removeNotification,
     }
 
     return (

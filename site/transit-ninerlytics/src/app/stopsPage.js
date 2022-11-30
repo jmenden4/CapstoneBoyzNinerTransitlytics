@@ -150,7 +150,7 @@ const StopsPage = () => {
     // navigate to a default datatype when url isn't valid
     useEffect(() => {
         if(currentItem == null) {
-            setSearchParams(params => [...params.entries(), ['data', 'avg_wait']], {replace: true})
+            setSearchParams(params => [...params.entries(), ['data', 'num_people_on']], {replace: true})
             // navigate({
             //     pathname: "/stops",
             //     search: `?${createSearchParams({
