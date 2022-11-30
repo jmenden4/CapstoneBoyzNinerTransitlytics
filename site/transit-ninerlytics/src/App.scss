@@ -15,6 +15,10 @@ html, body {
     height: 100%;
 }
 
+.leaflet-fade-anim .leaflet-popup {
+    transition: none !important;
+}
+
 .limit-height-dropdown {
     overflow-y: auto;
     max-height: 200px;

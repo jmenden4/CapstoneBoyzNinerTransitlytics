@@ -1,9 +1,9 @@
-import { useEffect, useContext, useState} from 'react'
+import { useEffect, useContext, useState, useRef } from 'react'
 import Col from 'react-bootstrap/Col'
 import Dropdown from 'react-bootstrap/Dropdown'
 import Table from 'react-bootstrap/Table'
 
-import { TileLayer, MapContainer, Popup, CircleMarker } from 'react-leaflet'
+import { TileLayer, MapContainer, Popup, CircleMarker, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 
@@ -142,6 +142,9 @@ const StopsPage = () => {
         ascending: false,
     })
 
+    const mapRef = useRef(null)
+    const markerRefs = useRef({})
+
 
     // get current data type/item
     const dataType = searchParams.get("data")
@@ -151,13 +154,6 @@ const StopsPage = () => {
     useEffect(() => {
         if(currentItem == null) {
             setSearchParams(params => [...params.entries(), ['data', 'num_people_on']], {replace: true})
-            // navigate({
-            //     pathname: "/stops",
-            //     search: `?${createSearchParams({
-            //         data: "avg_wait",
-            //     })}`,
-            //     replace: true,
-            // })
         }
     }, [])
 
@@ -248,7 +244,6 @@ const StopsPage = () => {
         return sortState.ascending ? delta : -delta
     })
 
-
     // http://alexurquhart.github.io/free-tiles/
     // https://leaflet-extras.github.io/leaflet-providers/preview/
     return (
@@ -263,6 +258,7 @@ const StopsPage = () => {
                         [35.295594, -80.754391],
                         [35.318172, -80.715042],
                     ]}
+                    ref={map => mapRef.current = map}
                 >
                     <TileLayer 
                         // attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
@@ -272,6 +268,7 @@ const StopsPage = () => {
                     {mapOrderStops.map((x, i) => {
                         const stopData = dataByStop[x.id]
                         let markerAttrs = {}
+                        let dataContent = null
                         if(!stopData) {
                             markerAttrs = {
                                 pathOptions: {
@@ -282,6 +279,9 @@ const StopsPage = () => {
                                 },
                                 radius: 8,
                             }
+                            dataContent = (
+                                <div>N/A</div>
+                            )
                         } else {
                             markerAttrs = {
                                 pathOptions: {
@@ -291,15 +291,20 @@ const StopsPage = () => {
                                 },
                                 radius: 12,
                             }
+                            dataContent = (
+                                <div>{stopData.text}</div>
+                            )
                         }
                         return (
                             <CircleMarker
-                                key={i}
+                                key={x.id}
+                                ref={elem => markerRefs.current[x.id] = elem}
                                 center={[x.latitude, x.longitude]}
                                 {...markerAttrs}
                             >
                                 <Popup>
-                                    {x.name}
+                                    <div className="fw-bold mb-1">{x.name}</div>
+                                    {dataContent}
                                 </Popup>
                             </CircleMarker>
                         )
@@ -347,8 +352,24 @@ const StopsPage = () => {
                                     )
                                 }
 
+                                const onClick = e => {
+                                    // get reference to leaflet map
+                                    const map = mapRef.current
+                                    if(!map)
+                                        return
+                                    // get reference to marker
+                                    const marker = markerRefs.current[x.id]
+                                    if(!marker)
+                                        return
+                                    // center on marker
+                                    // map.flyTo([x.latitude, x.longitude], map.zoom)
+                                    marker.openPopup()
+                                }
+
                                 return (
-                                    <tr key={i}>
+                                    <tr key={i} style={{
+                                        cursor: 'pointer',
+                                    }} onClick={onClick}>
                                         <td>{i+1}</td>
                                         <td>{x.name}</td>
                                         <td className="text-end">{dataContent}</td>    
