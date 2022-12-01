@@ -204,11 +204,11 @@ const BusesPage = () => {
         // add data column headers
         csvData += [
             'Bus Code',
-            'MilesDriven',
-            'AvgMilesPerDay',
+            'NumTimesStopped',
             'TotalPeopleOn',
             'TotalPeopleOff',
-            'NumTimesStopped',
+            'MilesDriven',
+            'AvgMilesPerDay',
         ].join('\t') + '\n'
 
         // add each bus's data
@@ -221,11 +221,11 @@ const BusesPage = () => {
             if(data != null) {
                 // add actual data values for this bus
                 values = values.concat(
-                    data.milesDriven,
-                    data.avgMilesPerDay,
+                    data.num_times_stopped,
                     data.total_people_on,
                     data.total_people_off,
-                    data.num_times_stopped,
+                    data.milesDriven,
+                    data.avgMilesPerDay,
                 )
             } else {
                 // add empty space because no data
