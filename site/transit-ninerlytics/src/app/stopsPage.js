@@ -254,10 +254,10 @@ const StopsPage = () => {
                     zoom={17}
                     minZoom={16}
                     maxZoom={18}
-                    maxBounds={[
-                        [35.295594, -80.754391],
-                        [35.318172, -80.715042],
-                    ]}
+                    // maxBounds={[
+                    //     [35.295594, -80.754391],
+                    //     [35.318172, -80.715042],
+                    // ]}
                     ref={map => mapRef.current = map}
                 >
                     <TileLayer 
