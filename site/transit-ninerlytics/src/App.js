@@ -22,7 +22,7 @@ import { createContext, useContext, useReducer, useState , useEffect} from 'reac
 
 import StopsPage from './app/stopsPage'
 import BusesPage from './app/busesPage'
-
+import { dateToISO, timeToHHMMSS } from './utility'
 
 
 export const AppContext = createContext()
@@ -335,7 +335,7 @@ const NotificationsContainer = () => {
 }
 
 
-const Layout = () => {
+const Layout = ({exportButton}) => {
     return (
         <Container fluid className="h-100 d-flex flex-column">
             <NavigationBar/>
@@ -350,8 +350,7 @@ const Layout = () => {
 
 let _notification_id_sequence = 0
 
-const App = () => {
-
+const App = () => {    
     const[_buses, setBuses] = useState(null);
     const[_routes, setRoutes] = useState(null);
     const[_stops, setStops] = useState(null);
@@ -509,22 +508,6 @@ const App = () => {
         }
     }
 
-    const dateToISO = date => date.toLocaleDateString('en-CA')
-
-    const timeToHHMMSS = time => {
-        let hours = Math.floor(time / 2)
-        let minutes = (time % 2) * 30
-        let seconds = 0
-        if(time == 48) {
-            hours = 23
-            minutes = 59
-            seconds = 59
-        }
-        hours = hours.toString().padStart(2, '0')
-        minutes = minutes.toString().padStart(2, '0')
-        seconds = seconds.toString().padStart(2, '0')
-        return `${hours}:${minutes}:${seconds}`
-    }
 
 
     const dataRequestBody = () => {

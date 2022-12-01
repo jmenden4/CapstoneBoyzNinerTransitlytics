@@ -2,15 +2,17 @@ import { useEffect, useContext, useState, useRef } from 'react'
 import Col from 'react-bootstrap/Col'
 import Dropdown from 'react-bootstrap/Dropdown'
 import Table from 'react-bootstrap/Table'
+import Button from 'react-bootstrap/Button'
 
 import { TileLayer, MapContainer, Popup, CircleMarker, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 
 import {useSearchParams, useNavigate, createSearchParams} from 'react-router-dom'
-import {AppContext} from '../App.js'
+import {AppContext} from '../App'
 import Gradient from '../gradient'
-import THSortable from './tables.js'
+import THSortable from './tables'
+import { dateToISO, timeToHHMMSS, daysBetween } from '../utility'
 
 // This code allows the map icons to be displayed properly
 delete L.Icon.Default.prototype._getIconUrl
@@ -135,7 +137,7 @@ const sidebar = [
 
 const StopsPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
-    const {stopData, stops} = useContext(AppContext)
+    const {dataFilter, stopData, buses, routes, stops, sendNotification} = useContext(AppContext)
     
     const [sortState, setSortState] = useState({
         key: 'value',
@@ -243,6 +245,87 @@ const StopsPage = () => {
         // consider direction
         return sortState.ascending ? delta : -delta
     })
+
+    // when export button clicked
+    const onExportClick = async e => {
+        // get stops in order
+        const sortedStops = [...stops].sort((a, b) => a.name.localeCompare(b.name))
+        
+        const {minDate, maxDate, minTime, maxTime} = dataFilter
+        // calculate number of days
+        const numDays = daysBetween(minDate, maxDate) + 1
+        
+        // include header with parameters of filter
+        let csvData = 'Transit Ninerlytics Export\n'
+        csvData += `Dates: ${dateToISO(minDate)} - ${dateToISO(maxDate)} (${numDays} days)\n`
+        csvData += `Times: ${timeToHHMMSS(minTime)} - ${timeToHHMMSS(maxTime)}\n`
+        csvData += `Routes: ${routes.filter(x => dataFilter.routes.includes(x.id)).map(x => x.name).sort()}\n`
+        csvData += `Buses: ${buses.filter(x => dataFilter.buses.includes(x.id)).map(x => x.code).sort()}\n`
+        csvData += '\n'
+        
+        // add data column headers
+        csvData += [
+            'Stop Name',
+            'Latitude',
+            'Longitude',
+            'TotalPeopleOn',
+            'TotalPeopleOff',
+            'NumTimesStopped',
+            'AvgWaitTime (days)',
+            'MinWaitTime (days)',
+            'MaxWaitTime (days)',
+        ].join('\t') + '\n'
+
+        // get all stop data organized by stop id
+        const allDataByStop = {}
+        stopData.forEach(x => {
+            allDataByStop[x.id] = x
+        })
+
+        // add each stop's data
+        sortedStops.forEach(stop => {
+            // get this stops data
+            const data = allDataByStop[stop.id]
+            // start with stop information
+            let values = [
+                stop.name,
+                stop.latitude,
+                stop.longitude,
+            ]
+            if(data != null) {
+                // add actual data values for this stop
+                values = values.concat(
+                    data.total_people_on,
+                    data.total_people_off,
+                    data.num_times_stopped,
+                    data.avg_wait_time / 60 / 60 / 24,
+                    data.min_wait_time / 60 / 60 / 24,
+                    data.max_wait_time / 60 / 60 / 24,
+                )
+            } else {
+                // add empty space because no data
+                values = values.concat(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                )
+            }
+            // add to csv data
+            csvData += values.join('\t') + '\n'
+        })
+
+        // copy to clipboard
+        try {
+            await navigator.clipboard.writeText(csvData)
+            sendNotification('success', 'Success', 'Data copied to clipboard!')
+        } catch(err) {
+            // console.info(err)
+            sendNotification('error', 'Error', 'Could not copy to clipboard!')
+        }
+    }
 
     // http://alexurquhart.github.io/free-tiles/
     // https://leaflet-extras.github.io/leaflet-providers/preview/
@@ -379,6 +462,11 @@ const StopsPage = () => {
                         </tbody>
                     </Table>
                 </div>
+            </div>
+            <div className="export-container position-absolute bottom-0 mb-3">
+                <Button 
+                    disabled={stopData == null}
+                    onClick={onExportClick}>Export</Button>
             </div>
         </>
     )

@@ -8,15 +8,8 @@ import Popover from 'react-bootstrap/Popover'
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger'
 import Form from 'react-bootstrap/Form'
 import Modal from 'react-bootstrap/Modal'
+import { dateToISO, timeToHHMMSS, daysBetween } from '../utility'
 
-
-const daysBetween = (aDate, bDate) => {
-    // do date difference in UTC to avoid Daylight Savings Time
-    const aUTC = Date.UTC(aDate.getFullYear(), aDate.getMonth(), aDate.getDate())
-    const bUTC = Date.UTC(bDate.getFullYear(), bDate.getMonth(), bDate.getDate())
-    const MS_PER_DAY = 1000 * 60 * 60 * 24
-    return Math.floor((bUTC - aUTC) / MS_PER_DAY)
-}
 
 
 
@@ -36,7 +29,7 @@ const fromLocalStorage = (key, defaultValue) => {
 
 
 const BusesPage = () => {
-    const {dataFilter, buses, busData} = useContext(AppContext)
+    const {dataFilter, routes, buses, busData, sendNotification} = useContext(AppContext)
     const [sortState, setSortState] = useState({
         key: 'name',
         ascending: true,
@@ -166,119 +159,208 @@ const BusesPage = () => {
         }
         setModalValidated(true)
     }
+
+
+    const MI_PER_KM = 0.621371
+    tableOrderRows.forEach(x => {
+        const {data} = x
+        // if has data, store extra calculated columns
+        if(data) {
+            data.milesDriven = data.distance_from_last * MI_PER_KM
+            data.avgMilesPerDay = data.milesDriven / numDays
+            intervals.forEach(interval => {
+                data[interval.storage_key] = interval.miles / data.avgMilesPerDay
+            })
+        }
+    })
+
+
+    // when export button clicked
+    const onExportClick = async e => {
+        // get stops in order
+        const sortedBuses = [...tableOrderRows].sort((a, b) => parseInt(a.bus.code) - parseInt(b.bus.code))
+        
+        // include header with parameters of filter
+        const {minDate, maxDate, minTime, maxTime} = dataFilter
+        let csvData = 'Transit Ninerlytics Export\n'
+        csvData += `Dates: ${dateToISO(minDate)} - ${dateToISO(maxDate)} (${numDays} days)\n`
+        csvData += `Times: ${timeToHHMMSS(minTime)} - ${timeToHHMMSS(maxTime)}\n`
+        csvData += `Routes: ${routes.filter(x => dataFilter.routes.includes(x.id)).map(x => x.name).sort()}\n`
+        csvData += `Buses: ${buses.filter(x => dataFilter.buses.includes(x.id)).map(x => x.code).sort()}\n`
+        csvData += '\n'
+        
+        // add data column headers
+        csvData += [
+            'Bus Code',
+            'MilesDriven',
+            'AvgMilesPerDay',
+            'TotalPeopleOn',
+            'TotalPeopleOff',
+            'NumTimesStopped',
+        ].join('\t') + '\n'
+
+        // add each bus's data
+        sortedBuses.forEach(x => {
+            const {bus, data} = x
+            // start with bus information
+            let values = [
+                bus.code,
+            ]
+            if(data != null) {
+                // add actual data values for this bus
+                values = values.concat(
+                    data.milesDriven,
+                    data.avgMilesPerDay,
+                    data.total_people_on,
+                    data.total_people_off,
+                    data.num_times_stopped,
+                )
+            } else {
+                // add empty space because no data
+                values = values.concat(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                )
+            }
+            // add to csv data
+            csvData += values.join('\t') + '\n'
+        })
+
+        // copy to clipboard
+        try {
+            await navigator.clipboard.writeText(csvData)
+            sendNotification('success', 'Success', 'Data copied to clipboard!')
+        } catch(err) {
+            // console.info(err)
+            sendNotification('error', 'Error', 'Could not copy to clipboard!')
+        }
+    }
+
+
+    
+
     
     return (
-        <div style={{
-            marginRight: 'auto',
-            marginLeft: 'auto',
-            maxWidth: 1000,
-        }}>
-            <Modal
-                show={intervalModalShown}
-                onHide={() => setIntervalModalShown(false)}
-                centered
-            >
-                <Modal.Header>
-                    <Modal.Title>{modalState.name} Interval</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form noValidate validated={modalValidated} onSubmit={onSubmit}>
-                        <div className="mb-2">
-                            {modalState.message}
-                        </div>
-                        <Form.Text>
-                            Distance (miles)
-                        </Form.Text>
-                        <Form.Group className="mb-3">
-                            <Form.Control type="number" placeholder="Miles" min={1} required value={modalState.miles} onChange={e => {
-                                setModalState({
-                                    ...modalState,
-                                    miles: e.target.value,
-                                })
-                            }} autoFocus/>
-                            <Form.Control.Feedback type="invalid">
-                                Must be more than 0 miles.
-                            </Form.Control.Feedback>
-                        </Form.Group>
-                        <Form.Group className="d-flex justify-content-end">
-                            <Button type="submit">Done</Button>
-                        </Form.Group>
-                    </Form>  
-                </Modal.Body>
-            </Modal>
-
-            <div className="d-flex flex-row mt-5 mb-4">
-                <div className="d-flex align-items-center" style={{
-                    width: '46%',
-                }}>
-                    <span className="p-2 fw-bold">
-                        Days: {numDays == null ? 'N/A' : numDays.toLocaleString()}
-                    </span>
-                </div>
-                {intervals.map((x, i) => {
-                    return (
-                        <div key={i} className="d-flex" style={{width: '18%'}}>
-                            <Button className="flex-grow-1 m-2" onClick={e => showIntervalModal(x)}>{x.miles} mi.</Button>
-                        </div>
-                    )
-                })}
-            </div>
-
-            <Table className="table table-bordered table-hover" style={{
-                tableLayout: 'fixed',
+        <>
+            <div style={{
+                marginRight: 'auto',
+                marginLeft: 'auto',
+                maxWidth: 1000,
             }}>
-                <thead>
-                    <tr>
-                        <th className="bus-table-col1"></th>
-                        <th></th>
-                        <th></th>
-                        <th className="text-center" colSpan="3">Maintenance Intervals (Days)</th>
-                    </tr>
-                    <tr>
-                        <THSortable className="bus-table-col1" name="Bus" sortKey="name" defaultAscending sortState={sortState} setSortState={setSortState}/>
-                        <THSortable name="Miles Driven" sortKey="miles" sortState={sortState} setSortState={setSortState} alignRight/>
-                        <THSortable name="Avg Miles / Day" sortKey="avg_miles" sortState={sortState} setSortState={setSortState} alignRight/>
-                        <THSortable name="Refuel" sortKey="refuel" defaultAscending sortState={sortState} setSortState={setSortState} alignRight/>
-                        <THSortable name="Oil Change" sortKey="oil_change" defaultAscending sortState={sortState} setSortState={setSortState} alignRight/>
-                        <THSortable name="Inspection" sortKey="inspection" defaultAscending sortState={sortState} setSortState={setSortState} alignRight/>
-                    </tr>
-                </thead>
-                <tbody>
-                    {tableOrderRows.map((x, i) => {
-                        const {bus, data} = x
-                        
-                        if(data != null) {
-                            const MI_PER_KM = 0.621371
-                            const milesDriven = data.distance_from_last * MI_PER_KM
-                            const avgMilesPerDay = milesDriven / numDays
-                            return (
-                                <tr key={i}>
-                                    <td className="bus-table-col1">{bus.code}</td>
-                                    <td className="text-end" style={{backgroundColor: data.relativeMilesColor}}>{(milesDriven).toFixed(1)}</td>
-                                    <td className="text-end">{(avgMilesPerDay).toFixed(1)}</td>   
-                                    {intervals.map((x, i) => 
-                                        <td key={i} className="text-end">{(x.miles / avgMilesPerDay).toFixed(1)}</td>
-                                    )} 
-                                </tr>
-                            )
-                        } else {
-                            return (
-                                <tr key={i}>
-                                    <td className="bus-table-col1">{bus.code}</td>
-                                    <td className="text-end">-</td>
-                                    <td className="text-end">-</td>    
-                                    <td className="text-end">-</td>    
-                                    <td className="text-end">-</td>    
-                                    <td className="text-end">-</td>    
-                                </tr>
-                            )
-                        }
-                        
-                        
+                <Modal
+                    show={intervalModalShown}
+                    onHide={() => setIntervalModalShown(false)}
+                    centered
+                >
+                    <Modal.Header>
+                        <Modal.Title>{modalState.name} Interval</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Form noValidate validated={modalValidated} onSubmit={onSubmit}>
+                            <div className="mb-2">
+                                {modalState.message}
+                            </div>
+                            <Form.Text>
+                                Distance (miles)
+                            </Form.Text>
+                            <Form.Group className="mb-3">
+                                <Form.Control type="number" placeholder="Miles" min={1} required value={modalState.miles} onChange={e => {
+                                    setModalState({
+                                        ...modalState,
+                                        miles: e.target.value,
+                                    })
+                                }} autoFocus/>
+                                <Form.Control.Feedback type="invalid">
+                                    Must be more than 0 miles.
+                                </Form.Control.Feedback>
+                            </Form.Group>
+                            <Form.Group className="d-flex justify-content-end">
+                                <Button type="submit">Done</Button>
+                            </Form.Group>
+                        </Form>  
+                    </Modal.Body>
+                </Modal>
+
+                <div className="d-flex flex-row mt-5 mb-4">
+                    <div className="d-flex align-items-center" style={{
+                        width: '46%',
+                    }}>
+                        <span className="p-2 fw-bold">
+                            Days: {numDays == null ? 'N/A' : numDays.toLocaleString()}
+                        </span>
+                    </div>
+                    {intervals.map((x, i) => {
+                        return (
+                            <div key={i} className="d-flex" style={{width: '18%'}}>
+                                <Button className="flex-grow-1 m-2" onClick={e => showIntervalModal(x)}>{x.miles} mi.</Button>
+                            </div>
+                        )
                     })}
-                </tbody>
-            </Table>
-        </div>
+                </div>
+
+                <Table className="table table-bordered table-hover" style={{
+                    tableLayout: 'fixed',
+                }}>
+                    <thead>
+                        <tr>
+                            <th className="bus-table-col1"></th>
+                            <th></th>
+                            <th></th>
+                            <th className="text-center" colSpan="3">Maintenance Intervals (Days)</th>
+                        </tr>
+                        <tr>
+                            <THSortable className="bus-table-col1" name="Bus" sortKey="name" defaultAscending sortState={sortState} setSortState={setSortState}/>
+                            <THSortable name="Miles Driven" sortKey="miles" sortState={sortState} setSortState={setSortState} alignRight/>
+                            <THSortable name="Avg Miles / Day" sortKey="avg_miles" sortState={sortState} setSortState={setSortState} alignRight/>
+                            <THSortable name="Refuel" sortKey="refuel" defaultAscending sortState={sortState} setSortState={setSortState} alignRight/>
+                            <THSortable name="Oil Change" sortKey="oil_change" defaultAscending sortState={sortState} setSortState={setSortState} alignRight/>
+                            <THSortable name="Inspection" sortKey="inspection" defaultAscending sortState={sortState} setSortState={setSortState} alignRight/>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {tableOrderRows.map((x, i) => {
+                            const {bus, data} = x
+                            if(data != null) {
+                                // normal row that shows all data if available
+                                return (
+                                    <tr key={i}>
+                                        <td className="bus-table-col1">{bus.code}</td>
+                                        <td className="text-end" style={{backgroundColor: data.relativeMilesColor}}>{data.milesDriven.toFixed(1)}</td>
+                                        <td className="text-end">{data.avgMilesPerDay.toFixed(1)}</td>   
+                                        {intervals.map((interval, i) => 
+                                            <td key={i} className="text-end">{(data[interval.storage_key]).toFixed(1)}</td>
+                                        )} 
+                                    </tr>
+                                )
+                            } else {
+                                // empty row with only bus code when no data
+                                return (
+                                    <tr key={i}>
+                                        <td className="bus-table-col1">{bus.code}</td>
+                                        <td className="text-end">-</td>
+                                        <td className="text-end">-</td>    
+                                        <td className="text-end">-</td>    
+                                        <td className="text-end">-</td>    
+                                        <td className="text-end">-</td>    
+                                    </tr>
+                                )
+                            }
+                            
+                            
+                        })}
+                    </tbody>
+                </Table>
+                
+            </div>
+            <div className="export-container position-absolute bottom-0 mb-3">
+                <Button 
+                    disabled={busData == null}
+                    onClick={onExportClick}>Export</Button>
+            </div>
+        </>
     )
 
 }
