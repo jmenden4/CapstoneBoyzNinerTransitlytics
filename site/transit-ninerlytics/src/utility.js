@@ -23,3 +23,19 @@ export const daysBetween = (aDate, bDate) => {
     const MS_PER_DAY = 1000 * 60 * 60 * 24
     return Math.floor((bUTC - aUTC) / MS_PER_DAY)
 }
+
+
+export const formatAsTime = minutes => {
+    const x = Math.round(minutes)
+    const h = Math.floor(x / 60)
+    const m = x % 60
+    let value = ''
+    if(h != 0)
+        value += `${h}h`
+    if(m != 0 || h == 0) {
+        if(h != 0)
+            value += ' '
+        value += `${m}m`
+    }
+    return value
+}

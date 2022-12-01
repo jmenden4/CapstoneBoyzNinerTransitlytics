@@ -1,43 +1,40 @@
-import { useEffect, useContext, useState, useRef } from 'react'
+import { useEffect, useContext, useState, useRef} from 'react'
+import ReactDOMServer from 'react-dom/server'
 import Col from 'react-bootstrap/Col'
 import Dropdown from 'react-bootstrap/Dropdown'
 import Table from 'react-bootstrap/Table'
 import Button from 'react-bootstrap/Button'
 
-import { TileLayer, MapContainer, Popup, CircleMarker, useMap } from 'react-leaflet'
+import { TileLayer, MapContainer, Popup, Marker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 
-import {useSearchParams, useNavigate, createSearchParams} from 'react-router-dom'
+import {useSearchParams} from 'react-router-dom'
 import {AppContext} from '../App'
 import Gradient from '../gradient'
 import THSortable from './tables'
-import { dateToISO, timeToHHMMSS, daysBetween } from '../utility'
-
-// This code allows the map icons to be displayed properly
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-    iconUrl: require('leaflet/dist/images/marker-icon.png'),
-    shadowUrl: require('leaflet/dist/images/marker-shadow.png')
-})
+import { dateToISO, timeToHHMMSS, daysBetween, formatAsTime } from '../utility'
 
 
 
-const formatAsTime = minutes => {
-    const x = Math.round(minutes)
-    const h = Math.floor(x / 60)
-    const m = x % 60
-    let value = ''
-    if(h != 0)
-        value += `${h}h`
-    if(m != 0 || h == 0) {
-        if(h != 0)
-            value += ' '
-        value += `${m}m`
+// allow overriding zindex of markers to control exact order
+(function(obj) {
+    // only store original _setPos once to avoid issue with hotreload
+    if(!obj.prototype.__setPos) {
+        obj.prototype.__setPos = obj.prototype._setPos
     }
-    return value
-}
+    obj.prototype._setPos = function() {
+        // call original function
+        obj.prototype.__setPos.apply(this, arguments)
+        // optional replace zindex
+        const {zIndexOffset} = this.options
+        if(zIndexOffset != null)
+            this._zIndex = zIndexOffset
+        // update element
+        this._resetZIndex()
+    }
+})(L.Marker)
+
 
 
 const intensityGradient = new Gradient(['003f5c', '7a5195', 'ef5675', 'ffa600'])
@@ -59,7 +56,7 @@ const sidebar = [
         },
         gradient: intensityGradient,
         colorIntensity: colorValueLog,
-        textLight: x => true,
+        textColor: x => 'rgba(255,255,255,0.9)',
     },
     {
         name: "# People Off",
@@ -73,7 +70,7 @@ const sidebar = [
         },
         gradient: intensityGradient,
         colorIntensity: colorValueLog,
-        textLight: x => true,
+        textColor: x => 'rgba(255,255,255,0.9)',
     },
     {
         name: "# Times Stopped",
@@ -87,7 +84,21 @@ const sidebar = [
         },
         gradient: intensityGradient,
         colorIntensity: colorValueLog,
-        textLight: x => true,
+        textColor: x => 'rgba(255,255,255,0.9)',
+    },
+    {
+        name: "Min Wait Time",
+        key: "min_wait",
+        dataFunc: x => {
+            const value = x.min_wait_time / 60
+            return {
+                value,
+                text: formatAsTime(value),
+            }
+        },
+        relativeValue: x => Math.min(x / (60 * 1.5), 1),
+        gradient: goodBadGradient,
+        textColor: x => x >= 0.75 / 1.5 ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.4)',
     },
     {
         name: "Avg Wait Time",
@@ -102,21 +113,7 @@ const sidebar = [
         },
         relativeValue: x => Math.min(x / (60 * 1.5), 1),
         gradient: goodBadGradient,
-        textLight: x => x >= 0.75 / 1.5,
-    },
-    {
-        name: "Min Wait Time",
-        key: "min_wait",
-        dataFunc: x => {
-            const value = x.min_wait_time / 60
-            return {
-                value,
-                text: formatAsTime(value),
-            }
-        },
-        relativeValue: x => Math.min(x / (60 * 1.5), 1),
-        gradient: goodBadGradient,
-        textLight: x => x >= 0.75 / 1.5,
+        textColor: x => x >= 0.75 / 1.5 ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.4)',
     },
     {
         name: "Max Wait Time",
@@ -130,7 +127,7 @@ const sidebar = [
         },
         relativeValue: x => Math.min(x / (60 * 1.5), 1),
         gradient: goodBadGradient,
-        textLight: x => x >= 0.75 / 1.5,
+        textColor: x => x >= 0.75 / 1.5 ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.4)',
     },
 ]
 
@@ -173,11 +170,14 @@ const StopsPage = () => {
         })
     }
 
-    
+   
+
+    const allDataByStop = {}
     const dataByStop = {}
     if(stopData != null) {
         // evaluate to get information from data
         stopData.forEach(x => {
+            allDataByStop[x.id] = x
             dataByStop[x.id] = currentItem.dataFunc(x)
         })
 
@@ -207,22 +207,11 @@ const StopsPage = () => {
             if(currentItem.colorIntensity)
                 value = currentItem.colorIntensity(value)
             x.color = currentItem.gradient.colorAt(value)
+            x.textColor = currentItem.textColor(value)
         })
     }
     
     
-    // stops sorted for display on map
-    const mapOrderStops = [...stops].sort((a, b) => {
-        const aData = dataByStop[a.id]
-        const bData = dataByStop[b.id]
-        if(!aData)
-            return -1
-        if(!bData)
-            return 1
-        return aData.value - bData.value
-    })
-
-
     // stops sorted for data table
     const tableOrderStops = [...stops].sort((a, b) => {
         const aData = dataByStop[a.id]
@@ -245,6 +234,10 @@ const StopsPage = () => {
         // consider direction
         return sortState.ascending ? delta : -delta
     })
+    
+    // stops sorted for display on map
+    const mapOrderStops = [...tableOrderStops].reverse()
+
 
     // when export button clicked
     const onExportClick = async e => {
@@ -322,7 +315,6 @@ const StopsPage = () => {
             await navigator.clipboard.writeText(csvData)
             sendNotification('success', 'Success', 'Data copied to clipboard!')
         } catch(err) {
-            // console.info(err)
             sendNotification('error', 'Error', 'Could not copy to clipboard!')
         }
     }
@@ -335,7 +327,7 @@ const StopsPage = () => {
                 <MapContainer 
                     center={[35.306974, -80.733743]}
                     zoom={17}
-                    minZoom={16}
+                    minZoom={15}
                     maxZoom={18}
                     // maxBounds={[
                     //     [35.295594, -80.754391],
@@ -350,47 +342,75 @@ const StopsPage = () => {
                     />
                     {mapOrderStops.map((x, i) => {
                         const stopData = dataByStop[x.id]
-                        let markerAttrs = {}
-                        let dataContent = null
-                        if(!stopData) {
-                            markerAttrs = {
-                                pathOptions: {
-                                    color: '#000',
-                                    fillColor: '#fff',
-                                    fillOpacity: 1,
-                                    weight: 2,
-                                },
-                                radius: 8,
-                            }
-                            dataContent = (
-                                <div>N/A</div>
+                        const allData = allDataByStop[x.id] 
+                        if(stopData) {
+                            // marker that shows data value with color on gradient when has data
+                            return (
+                                <Marker
+                                    key={x.id}
+                                    ref={elem => markerRefs.current[x.id] = elem}
+                                    position={[x.latitude, x.longitude]}
+                                    zIndexOffset={600+i}
+                                    icon={L.divIcon({
+                                        className: 'bus-stop-marker',
+                                        html: ReactDOMServer.renderToString(
+                                            <div className="d-inline-block rounded" style={{
+                                                backgroundColor: stopData.color,
+                                                color: stopData.textColor,
+                                            }}>
+                                                <div className="px-1 rounded text-nowrap fw-bold fs-6" style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    border: '2px solid rgba(0,0,0,0.15)',
+                                                }}>{stopData.text}</div>
+                                                
+                                            </div>
+                                        )
+                                    })}
+                                >
+                                    <Popup>
+                                        <div className="fw-bold mb-2 fs-6 text-center">{x.name}</div>
+                                        <table className="w-100">
+                                            <tbody>
+                                                {sidebar.map(entry => {
+                                                    return (
+                                                        <tr key={entry.key}>
+                                                            <td className="fw-bold pb-1 pe-2">{entry.name}</td>
+                                                            <td className={'text-end' + ((entry == currentItem) ? ' fw-bold' : '')}>{entry.dataFunc(allData).text}</td>
+                                                        </tr>
+                                                    )
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </Popup>
+                                </Marker>
                             )
                         } else {
-                            markerAttrs = {
-                                pathOptions: {
-                                    fillColor: stopData.color,
-                                    fillOpacity: 1,
-                                    weight: 0,
-                                },
-                                radius: 12,
-                            }
-                            dataContent = (
-                                <div>{stopData.text}</div>
+                            // empty white circle marker when no data
+                            return (
+                                <Marker
+                                    key={x.id}
+                                    ref={elem => markerRefs.current[x.id] = elem}
+                                    position={[x.latitude, x.longitude]}
+                                    zIndexOffset={600+i}
+                                    icon={L.divIcon({
+                                        className: 'bus-stop-marker',
+                                        html: ReactDOMServer.renderToString(
+                                            <div className="d-inline-block flex-shrink-0 rounded-circle border border-2 border-dark" style={{
+                                                width: 16,
+                                                height: 16,
+                                                backgroundColor: '#fff',
+                                            }}></div>
+                                        )
+                                    })}
+                                >
+                                    <Popup>
+                                        <div className="fw-bold mb-1">{x.name}</div>
+                                        <div>No data!</div>
+                                    </Popup>
+                                </Marker>
                             )
                         }
-                        return (
-                            <CircleMarker
-                                key={x.id}
-                                ref={elem => markerRefs.current[x.id] = elem}
-                                center={[x.latitude, x.longitude]}
-                                {...markerAttrs}
-                            >
-                                <Popup>
-                                    <div className="fw-bold mb-1">{x.name}</div>
-                                    {dataContent}
-                                </Popup>
-                            </CircleMarker>
-                        )
                     })}
                     
                 </MapContainer>
@@ -429,8 +449,7 @@ const StopsPage = () => {
                                         <div className="fw-bold text-center" style={{
                                             borderRadius: '0.375rem',
                                             backgroundColor: xData.color,
-                                            // color: xData.relativeValue < 0.5 ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.6)',
-                                            color: currentItem.textLight(xData.relativeValue) ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.4)',
+                                            color: xData.textColor,
                                         }}>{xData.text}</div>
                                     )
                                 }

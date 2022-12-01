@@ -19,6 +19,16 @@ html, body {
     transition: none !important;
 }
 
+.bus-stop-marker {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    width: 0 !important;
+    height: 0 !important;
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+}
+
 .limit-height-dropdown {
     overflow-y: auto;
     max-height: 200px;
@@ -47,4 +57,5 @@ html, body {
 
 .export-container {
     z-index: 1090;
+    width: unset !important;
 }
