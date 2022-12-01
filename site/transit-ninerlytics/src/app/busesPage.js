@@ -1,41 +1,31 @@
-import { useEffect, useContext, useState, useReducer} from 'react'
+import { useContext, useState, useReducer} from 'react'
 import Table from 'react-bootstrap/Table'
 import THSortable from './tables.js'
 import {AppContext} from '../App.js'
 import Gradient from '../gradient'
 import Button from 'react-bootstrap/Button'
-import Popover from 'react-bootstrap/Popover'
-import OverlayTrigger from 'react-bootstrap/OverlayTrigger'
 import Form from 'react-bootstrap/Form'
 import Modal from 'react-bootstrap/Modal'
-import { dateToISO, timeToHHMMSS, daysBetween } from '../utility'
+import { dateToISO, timeToHHMMSS, daysBetween, fromLocalStorage } from '../utility'
 
 
 
-
+// color scale to use on data
 const intensityGradient = new Gradient(['ffffff', 'ffa600'])
 
 
-const fromLocalStorage = (key, defaultValue) => {
-    try {
-        const value = localStorage.getItem(key)
-        if(value != null)
-            return value
-    } catch(e) {
-        console.error(e)
-    }
-    return defaultValue
-}
-
-
+// Main Bus page component
 const BusesPage = () => {
+    // get required data from App
     const {dataFilter, routes, buses, busData, sendNotification} = useContext(AppContext)
+
+    // store current sorting for table
     const [sortState, setSortState] = useState({
         key: 'name',
         ascending: true,
     })
 
-
+    // to keep track of number of days in filter
     let numDays = null
 
     // organize data by bus id
@@ -59,6 +49,7 @@ const BusesPage = () => {
         })
     }
 
+    // combine buses with their data by id
     const busesWithData = buses.map(bus => {
         return {
             bus,
@@ -66,13 +57,14 @@ const BusesPage = () => {
         }
     })
     
-
+    // define order of rows for the table based on current sort state (which column, ascending/descending)
     const tableOrderRows = [...busesWithData].sort((a, b) => {
         const {key, ascending} = sortState
         let result = 0
         if(key != 'name') {
             if(a.data && b.data) {
                 switch(key) {
+                    // set comparison directly based on stop information
                     case 'stops': {
                         result = a.data.num_times_stopped - b.data.num_times_stopped
                         break
@@ -112,18 +104,17 @@ const BusesPage = () => {
         return ascending ? result : -result
     })
 
-    const REFUEL_INTERVAL_MI = 500
-    const OIL_CHANGE_INTERVAL_MI = 1000
-    const INSPECTION_INTERVAL_MI = 2000
-
-    
+    // store state for the maintenance interval editing popup
     const [intervalModalShown, setIntervalModalShown] = useState(false)
     const [modalValidated, setModalValidated] = useState(false)
     const [modalState, setModalState] = useState({})
     
+    // store actual interval information and function to update
     const [intervals, updateIntervals] = useReducer((state, action) => {
+        // update the value of an interval
         const {key, miles} = action
         state[key].miles = miles
+        // try to store it in the browser so it stays across refreshes
         try {
             localStorage.setItem(state[key].storage_key, miles)
         } catch(e) {
@@ -131,6 +122,7 @@ const BusesPage = () => {
         }
         return state
     }, [
+        // define different intervals and default values or read from storage
         {
             key: 0,
             name: 'Refuel',
@@ -154,32 +146,39 @@ const BusesPage = () => {
         },
     ])
     
+    // high level function to show the popup for a specific interval
     const showIntervalModal = (interval) => {
         setModalState(interval)
         setIntervalModalShown(true)
         setModalValidated(false)
     }
   
+    // when the user is done changing the value of an interval in the popup
     const onSubmit = e => {
+        // don't refresh the page
         e.preventDefault()
-        console.info('submit')
+        // read values
         const {key, miles} = modalState
+        // validate the information
         const valid = e.target.checkValidity()
         if(valid) {
+            // update the interval and hide popup if valid
             updateIntervals({key, miles})
             setIntervalModalShown(false)
         }
+        // set validation results to show
         setModalValidated(true)
     }
-
 
     const MI_PER_KM = 0.621371
     tableOrderRows.forEach(x => {
         const {data} = x
         // if has data, store extra calculated columns
         if(data) {
+            // store miles
             data.milesDriven = data.distance_from_last * MI_PER_KM
             data.avgMilesPerDay = data.milesDriven / numDays
+            // calculate frequencies with the intervals
             intervals.forEach(interval => {
                 data[interval.storage_key] = interval.miles / data.avgMilesPerDay
             })
@@ -246,15 +245,11 @@ const BusesPage = () => {
             await navigator.clipboard.writeText(csvData)
             sendNotification('success', 'Success', 'Data copied to clipboard!')
         } catch(err) {
-            // console.info(err)
             sendNotification('error', 'Error', 'Could not copy to clipboard!')
         }
     }
 
 
-    
-
-    
     return (
         <>
             <div style={{
@@ -374,7 +369,6 @@ const BusesPage = () => {
                         })}
                     </tbody>
                 </Table>
-                
             </div>
             <div className="export-container position-absolute bottom-0 mb-3">
                 <Button 

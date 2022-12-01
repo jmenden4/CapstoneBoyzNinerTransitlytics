@@ -1,5 +1,7 @@
+// convert date to iso format YYYY-MM-DD
 export const dateToISO = date => date.toLocaleDateString('en-CA')
 
+// convert time value to hh:mm:ss
 export const timeToHHMMSS = time => {
     let hours = Math.floor(time / 2)
     let minutes = (time % 2) * 30
@@ -16,6 +18,7 @@ export const timeToHHMMSS = time => {
 }
 
 
+// calculate number of days between 2 dates
 export const daysBetween = (aDate, bDate) => {
     // do date difference in UTC to avoid Daylight Savings Time
     const aUTC = Date.UTC(aDate.getFullYear(), aDate.getMonth(), aDate.getDate())
@@ -25,6 +28,7 @@ export const daysBetween = (aDate, bDate) => {
 }
 
 
+// format value as hours and minutes readable
 export const formatAsTime = minutes => {
     const x = Math.round(minutes)
     const h = Math.floor(x / 60)
@@ -38,4 +42,16 @@ export const formatAsTime = minutes => {
         value += `${m}m`
     }
     return value
+}
+
+// function to read from local storage in browser with default value if not there yet
+export const fromLocalStorage = (key, defaultValue) => {
+    try {
+        const value = localStorage.getItem(key)
+        if(value != null)
+            return value
+    } catch(e) {
+        console.error(e)
+    }
+    return defaultValue
 }

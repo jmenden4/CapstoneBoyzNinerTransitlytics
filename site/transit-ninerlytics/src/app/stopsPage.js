@@ -36,13 +36,14 @@ import { dateToISO, timeToHHMMSS, daysBetween, formatAsTime } from '../utility'
 })(L.Marker)
 
 
-
+// color scales to use for display
 const intensityGradient = new Gradient(['003f5c', '7a5195', 'ef5675', 'ffa600'])
 const goodBadGradient = new Gradient(['21de54', 'f7f71b', 'ed7f1f', 'de0000'])
 
+// function to help spread color variation on some data types
 const colorValueLog = x => Math.log10(x * 9 + 1)
 
-// datatypes to display in sidebar dropdown
+// datatypes to display in sidebar dropdown... define name, what the value is, how it shows, what colors to use
 const sidebar = [
     {
         name: "# People On",
@@ -105,7 +106,6 @@ const sidebar = [
         key: "avg_wait",
         dataFunc: x => {
             const value = x.avg_wait_time / 60
-            // const value = Math.random() * 60 * 2
             return {
                 value,
                 text: formatAsTime(value),
@@ -132,18 +132,20 @@ const sidebar = [
 ]
 
 
+// Main Stops page component
 const StopsPage = () => {
-    const [searchParams, setSearchParams] = useSearchParams()
+    // get required information
     const {dataFilter, stopData, buses, routes, stops, sendNotification} = useContext(AppContext)
-    
+    const [searchParams, setSearchParams] = useSearchParams()
+    // store sorting state for the sidebar
     const [sortState, setSortState] = useState({
         key: 'value',
         ascending: false,
     })
-
+    
+    // hold references to the map, and markers to enable extra behavior
     const mapRef = useRef(null)
     const markerRefs = useRef({})
-
 
     // get current data type/item
     const dataType = searchParams.get("data")
@@ -156,12 +158,12 @@ const StopsPage = () => {
         }
     }, [])
 
-
     // don't show anything until we're definitely at an actual data type (after re-navigated if required)
     if(currentItem == null) {
         return null
     }
     
+    // high level function to navigate to a specific data type
     const setDataType = key => {
         setSearchParams(x => {
             const params = Object.fromEntries(x)
@@ -170,12 +172,11 @@ const StopsPage = () => {
         })
     }
 
-   
-
+    // store organized data for fast lookup
     const allDataByStop = {}
     const dataByStop = {}
     if(stopData != null) {
-        // evaluate to get information from data
+        // store raw data and information based on current selected data
         stopData.forEach(x => {
             allDataByStop[x.id] = x
             dataByStop[x.id] = currentItem.dataFunc(x)
@@ -201,7 +202,7 @@ const StopsPage = () => {
             })
         }
 
-        // assign colors
+        // assign colors based on relative values
         Object.values(dataByStop).forEach(x => {
             let value = x.relativeValue
             if(currentItem.colorIntensity)
