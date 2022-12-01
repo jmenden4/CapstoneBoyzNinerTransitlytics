@@ -73,6 +73,18 @@ const BusesPage = () => {
         if(key != 'name') {
             if(a.data && b.data) {
                 switch(key) {
+                    case 'stops': {
+                        result = a.data.num_times_stopped - b.data.num_times_stopped
+                        break
+                    }
+                    case 'people_on': {
+                        result = a.data.total_people_on - b.data.total_people_on
+                        break
+                    }
+                    case 'people_off': {
+                        result = a.data.total_people_off - b.data.total_people_off
+                        break
+                    }
                     case 'miles':
                     case 'avg_miles': {
                         result = a.data.distance_from_last - b.data.distance_from_last
@@ -248,7 +260,7 @@ const BusesPage = () => {
             <div style={{
                 marginRight: 'auto',
                 marginLeft: 'auto',
-                maxWidth: 1000,
+                maxWidth: 1200,
             }}>
                 <Modal
                     show={intervalModalShown}
@@ -286,7 +298,7 @@ const BusesPage = () => {
 
                 <div className="d-flex flex-row mt-5 mb-4">
                     <div className="d-flex align-items-center" style={{
-                        width: '46%',
+                        width: '66.25%',
                     }}>
                         <span className="p-2 fw-bold">
                             Days: {numDays == null ? 'N/A' : numDays.toLocaleString()}
@@ -294,7 +306,7 @@ const BusesPage = () => {
                     </div>
                     {intervals.map((x, i) => {
                         return (
-                            <div key={i} className="d-flex" style={{width: '18%'}}>
+                            <div key={i} className="d-flex" style={{width: '11.25%'}}>
                                 <Button className="flex-grow-1 m-2" onClick={e => showIntervalModal(x)}>{x.miles} mi.</Button>
                             </div>
                         )
@@ -307,14 +319,17 @@ const BusesPage = () => {
                     <thead>
                         <tr>
                             <th className="bus-table-col1"></th>
-                            <th></th>
-                            <th></th>
+                            <th colSpan="3"></th>
+                            <th className="text-center" colSpan="2">Miles Driven</th>
                             <th className="text-center" colSpan="3">Maintenance Intervals (Days)</th>
                         </tr>
                         <tr>
                             <THSortable className="bus-table-col1" name="Bus" sortKey="name" defaultAscending sortState={sortState} setSortState={setSortState}/>
-                            <THSortable name="Miles Driven" sortKey="miles" sortState={sortState} setSortState={setSortState} alignRight/>
-                            <THSortable name="Avg Miles / Day" sortKey="avg_miles" sortState={sortState} setSortState={setSortState} alignRight/>
+                            <THSortable name="Stops" sortKey="stops" sortState={sortState} setSortState={setSortState} alignRight/>
+                            <THSortable name="People On" sortKey="people_on" sortState={sortState} setSortState={setSortState} alignRight/>
+                            <THSortable name="People Off" sortKey="people_off" sortState={sortState} setSortState={setSortState} alignRight/>
+                            <THSortable name="Total" sortKey="miles" sortState={sortState} setSortState={setSortState} alignRight/>
+                            <THSortable name="Daily Avg" sortKey="avg_miles" sortState={sortState} setSortState={setSortState} alignRight/>
                             <THSortable name="Refuel" sortKey="refuel" defaultAscending sortState={sortState} setSortState={setSortState} alignRight/>
                             <THSortable name="Oil Change" sortKey="oil_change" defaultAscending sortState={sortState} setSortState={setSortState} alignRight/>
                             <THSortable name="Inspection" sortKey="inspection" defaultAscending sortState={sortState} setSortState={setSortState} alignRight/>
@@ -328,6 +343,9 @@ const BusesPage = () => {
                                 return (
                                     <tr key={i}>
                                         <td className="bus-table-col1">{bus.code}</td>
+                                        <td className="text-end">{data.num_times_stopped.toLocaleString()}</td>
+                                        <td className="text-end">{data.total_people_on.toLocaleString()}</td>
+                                        <td className="text-end">{data.total_people_off.toLocaleString()}</td>
                                         <td className="text-end" style={{backgroundColor: data.relativeMilesColor}}>{data.milesDriven.toFixed(1)}</td>
                                         <td className="text-end">{data.avgMilesPerDay.toFixed(1)}</td>   
                                         {intervals.map((interval, i) => 
@@ -340,6 +358,9 @@ const BusesPage = () => {
                                 return (
                                     <tr key={i}>
                                         <td className="bus-table-col1">{bus.code}</td>
+                                        <td className="text-end">-</td>
+                                        <td className="text-end">-</td>
+                                        <td className="text-end">-</td>
                                         <td className="text-end">-</td>
                                         <td className="text-end">-</td>    
                                         <td className="text-end">-</td>    
